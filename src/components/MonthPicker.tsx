@@ -1,0 +1,156 @@
+import React, { useState, useMemo } from 'react';
+import { View, Modal, ViewStyle, ScrollView, Pressable } from 'react-native';
+import { Button, Text } from 'react-native-paper';
+import { useTheme } from '../contexts/ThemeContext';
+
+interface MonthPickerProps {
+  selectedDate: Date;
+  onChange: (date: Date) => void;
+  style?: ViewStyle;
+}
+
+export function MonthPicker({ selectedDate, onChange, style }: MonthPickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [tempMonth, setTempMonth] = useState(selectedDate.getMonth());
+  const [tempYear, setTempYear] = useState(selectedDate.getFullYear());
+  const { appTheme } = useTheme();
+
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+
+  // Generate list of available years (10 years back from today)
+  const years = useMemo(() => {
+    const list = [];
+    for (let i = currentYear; i >= currentYear - 10; i--) {
+      list.push(i);
+    }
+    return list;
+  }, [currentYear]);
+
+  // Generate list of available months (all 12, but restrict to current month if current year is selected)
+  const months = useMemo(() => {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    if (tempYear === currentYear) {
+      return monthNames.slice(0, currentMonth + 1);
+    }
+    return monthNames;
+  }, [tempYear, currentYear, currentMonth]);
+
+  const handleConfirm = () => {
+    const newDate = new Date(tempYear, tempMonth, 1);
+    onChange(newDate);
+    setIsOpen(false);
+  };
+
+  const monthYear = selectedDate.toLocaleDateString('en-US', {
+    month: 'short',
+    year: 'numeric',
+  });
+
+  return (
+    <View style={style}>
+      <Button
+        mode="outlined"
+        onPress={() => {
+          setTempMonth(selectedDate.getMonth());
+          setTempYear(selectedDate.getFullYear());
+          setIsOpen(true);
+        }}
+      >
+        {monthYear}
+      </Button>
+
+      <Modal
+        visible={isOpen}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ backgroundColor: appTheme.colors.surface, paddingBottom: 24, borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
+            <View style={{ alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant }}>
+              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+                Select Month & Year
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 16, paddingHorizontal: 16, paddingVertical: 24 }}>
+              {/* Month Picker */}
+              <View style={{ flex: 1, borderWidth: 1, borderColor: appTheme.colors.outline, borderRadius: 4, maxHeight: 200 }}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {months.map((m, i) => (
+                    <Pressable
+                      key={i}
+                      onPress={() => setTempMonth(i)}
+                      style={{
+                        paddingVertical: 12,
+                        paddingHorizontal: 12,
+                        backgroundColor: tempMonth === i ? appTheme.colors.primaryContainer : 'transparent',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: tempMonth === i ? appTheme.colors.onPrimaryContainer : appTheme.colors.onSurface,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {m}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Year Picker */}
+              <View style={{ flex: 1, borderWidth: 1, borderColor: appTheme.colors.outline, borderRadius: 4, maxHeight: 200 }}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {years.map((y) => (
+                    <Pressable
+                      key={y}
+                      onPress={() => setTempYear(y)}
+                      style={{
+                        paddingVertical: 12,
+                        paddingHorizontal: 12,
+                        backgroundColor: tempYear === y ? appTheme.colors.primaryContainer : 'transparent',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: tempYear === y ? appTheme.colors.onPrimaryContainer : appTheme.colors.onSurface,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {y}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 16 }}>
+              <Button
+                mode="outlined"
+                onPress={() => setIsOpen(false)}
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleConfirm}
+                style={{ flex: 1 }}
+              >
+                Confirm
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}

@@ -1,0 +1,23 @@
+node_modules
+android/
+ios/
+build/
+dist/
+*.log
+*.lock
+# Expo files
+.expo/
+.expo-shared/
+# React Native files
+*.keystore
+*.jks
+*.bundle
+# Misc
+.env
+# apk and ipa files
+*.apk
+*.ipa
+# evidence files
+evidence/
+# VSCode settings
+.vscode/

@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "cashtrack-native",
+    "slug": "cashtrack-native",
+    "icon": "./assets/app-icon.png",
+    "version": "0.1.0",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0f172a",
+    "orientation": "portrait",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "jsEngine": "hermes",
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "backgroundColor": "#00000000",
+      "translucent": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/app-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "READ_SMS",
+        "RECEIVE_SMS",
+        "READ_PHONE_STATE"
+      ],
+      "package": "com.anonymous.cashtracknative"
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "76563f36-9cb6-4240-9e0a-204d9107b9f6"
+      }
+    }
+  }
+}
