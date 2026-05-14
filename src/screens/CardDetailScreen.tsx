@@ -234,9 +234,13 @@ export default function CardDetailScreen() {
               {cardDetails?.name || 'Card Details'}
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 12 }}>
-            <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 4 }}>
+            <IconButton
+              icon={() => <MaterialCommunityIcons name="pencil" size={20} color={appTheme.colors.onPrimary} />}
+              onPress={() => (navigation as any).navigate('AddCard', { cardId })}
+            />
             <IconButton icon={() => <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.onPrimary} />} onPress={() => (navigation as any).navigate('AddTransaction', { cardId })} />
+            <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
           </View>
         </View>
       </View>

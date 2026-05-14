@@ -72,7 +72,7 @@ export function parseSmsForTransaction(sms: string): ParsedSmsCandidate {
 
 export function matchCardFromSms(
   accountHint: string | null,
-  userCards: { id: string; name: string; aliases?: string[] }[],
+  userCards: { id: string; name: string; aliases?: string[]; last_4_digits?: string | null }[],
   rawMessage?: string
 ): CardMatchResult {
   if (!accountHint) {
@@ -145,7 +145,7 @@ export function matchCardFromSms(
   for (const card of userCards) {
     const namesToTry = [card.name].concat(card.aliases || []);
     const cardIssuer = extractIssuer(namesToTry.join(' '));
-    const cardLast4 = extractLast4(namesToTry.join(' '));
+    const cardLast4 = card.last_4_digits || extractLast4(namesToTry.join(' '));
     let cardBestScore = 0;
 
     for (const name of namesToTry) {
@@ -175,19 +175,21 @@ export function matchCardFromSms(
       cardBestScore = Math.max(cardBestScore, Math.min(1, combined));
     }
 
-    if (smsIssuer && cardIssuer) {
+    // Priority matching: if both SMS and card have last 4 digits, this is the strongest signal
+    if (smsLast4 && cardLast4) {
+      if (smsLast4 === cardLast4) {
+        // Perfect match on last 4 digits - very high confidence
+        cardBestScore = Math.max(cardBestScore, 0.95);
+      } else {
+        // Mismatch on last 4 digits - penalize heavily
+        cardBestScore -= 0.5;
+      }
+    } else if (smsIssuer && cardIssuer) {
+      // Fallback to issuer matching when last 4 not available
       if (smsIssuer === cardIssuer) {
         cardBestScore += 0.35;
       } else {
         cardBestScore -= 0.25;
-      }
-    }
-
-    if (smsLast4 && cardLast4) {
-      if (smsLast4 === cardLast4) {
-        cardBestScore += 0.4;
-      } else {
-        cardBestScore -= 0.35;
       }
     }
 
@@ -275,6 +277,7 @@ export async function ingestSmsTransactions(
 
   // lazy import to avoid circular deps in tests
   const { addTransaction } = await import('./transactionWriteService');
+  const { supabase } = await import('./supabase');
 
   for (const sms of smsList) {
     const parsed = parseSmsForTransaction(sms);
@@ -300,6 +303,30 @@ export async function ingestSmsTransactions(
       };
       results.push(entry);
       continue;
+    }
+
+    // Check database for existing transaction with same SMS hash to prevent re-ingestion on app restart
+    try {
+      const { data: existingTxn, error: dbError } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('user_id', userId)
+        .filter('ingestion_metadata->>smsHash', 'eq', hash)
+        .single();
+
+      if (!dbError && existingTxn) {
+        // Transaction with this SMS already exists, mark as duplicate and skip
+        const entry: { parsed: ParsedSmsCandidate; match: CardMatchResult; createdTransaction?: any } = {
+          parsed,
+          match: { cardId: null, confidence: 0, matchedName: null, reason: 'already ingested' },
+        };
+        _ingestionSeen.add(hash);
+        results.push(entry);
+        continue;
+      }
+    } catch (err) {
+      // If database check fails, log but continue with ingestion (fail-open)
+      console.warn('Database dedup check failed, proceeding with ingestion:', err);
     }
     _ingestionSeen.add(hash);
     // If parser didn't extract an account hint, try a lightweight heuristic:

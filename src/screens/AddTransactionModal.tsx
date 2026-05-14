@@ -32,6 +32,7 @@ export default function AddTransactionModal() {
   const [customOtherPct, setCustomOtherPct] = useState('');
   const [cappedValueback, setCappedValueback] = useState<any | null>(null);
   const [isCapApplied, setIsCapApplied] = useState(false);
+  const [notes, setNotes] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -84,6 +85,7 @@ export default function AddTransactionModal() {
           setAmount(String(txnData.amount || ''));
           setSelectedCard(txnData.card_id);
           setSelectedCategory(txnData.category_id);
+          setNotes(txnData.notes || '');
 
           const actualAmountVal = txnData.actual_amount || txnData.amount;
           if (actualAmountVal === txnData.amount) {
@@ -189,6 +191,7 @@ export default function AddTransactionModal() {
           override_base_cashback_pct: overrideBase,
           override_accelerated_cashback_pct: overrideAccelerated,
           override_other_cashback_pct: overrideOther,
+          notes: notes.trim() || null,
           updated_at: new Date().toISOString(),
         };
         
@@ -220,7 +223,7 @@ export default function AddTransactionModal() {
           override_base_cashback_pct: overrideBase,
           override_accelerated_cashback_pct: overrideAccelerated,
           override_other_cashback_pct: overrideOther,
-          notes: null,
+          notes: notes.trim() || null,
         } as any);
         alert('Transaction added successfully');
       }
@@ -496,6 +499,27 @@ export default function AddTransactionModal() {
               </View>
             </View>
           )}
+        </View>
+
+        {/* Notes Field */}
+        <View>
+          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600', color: appTheme.colors.onSurface }}>
+            Description (optional)
+          </Text>
+          <TextInput
+            mode="outlined"
+            placeholder="e.g., Hotel booking via SmartBuy"
+            value={notes}
+            onChangeText={setNotes}
+            maxLength={200}
+            multiline
+            numberOfLines={2}
+            disabled={loading}
+            style={{ backgroundColor: appTheme.colors.surface }}
+          />
+          <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
+            {notes.length}/200
+          </Text>
         </View>
 
         {/* Action Buttons */}

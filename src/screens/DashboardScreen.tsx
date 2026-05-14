@@ -265,7 +265,7 @@ export default function DashboardScreen() {
                 setSmsSyncing(true);
                 try {
                   const { ingestSmsTransactions } = await import('../lib/smsIngestion');
-                  const userCards = state.cards.map((c) => ({ id: c.id, name: c.name, aliases: (c as any).aliases }));
+                  const userCards = state.cards.map((c) => ({ id: c.id, name: c.name, aliases: (c as any).aliases, last_4_digits: (c as any).last_4_digits }));
                   const results = await ingestSmsTransactions(sessionUserId, userCards);
                   const createdCount = results.filter((r) => r.createdTransaction && !(r.createdTransaction as any).error).length;
                   if (createdCount > 0) {

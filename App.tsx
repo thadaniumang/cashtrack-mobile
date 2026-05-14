@@ -68,7 +68,7 @@ function AppContent() {
 
         const { data, error } = await supabase
           .from('cards')
-          .select('id,name')
+          .select('id,name,last_4_digits')
           .eq('user_id', user.id);
 
         if (error) {
@@ -78,7 +78,7 @@ function AppContent() {
 
         if (isCancelled) return;
 
-        const results = await ingestSmsTransactions(user.id, (data || []) as Array<{ id: string; name: string }>);
+        const results = await ingestSmsTransactions(user.id, (data || []) as Array<{ id: string; name: string; last_4_digits?: string | null }>);
         const createdCount = results.filter((result) => result.createdTransaction && !('error' in result.createdTransaction)).length;
         const failedEntries = results.filter((result) => result.createdTransaction && 'error' in result.createdTransaction);
         const rejectedEntries = results.filter((result) => !result.createdTransaction);
