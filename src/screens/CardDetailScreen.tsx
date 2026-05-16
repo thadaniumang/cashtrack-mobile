@@ -9,6 +9,7 @@ import type { Transaction, CardCategory } from '../lib/cashbackCore';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
 import { TransactionRow } from '../components/TransactionRow';
 import { MonthPicker } from '../components/MonthPicker';
+import { formatPeriodWithMode, getCalendarMonthDates, getStatementMonthDatesForSelectedMonth } from '../lib/capPeriods';
 
 export default function CardDetailScreen() {
   const route = useRoute();
@@ -23,6 +24,7 @@ export default function CardDetailScreen() {
   const { appTheme } = useTheme();
   const navigation = useNavigation();
   const [selectedMonth, setSelectedMonth] = useState(() => new Date());
+  const [viewMode, setViewMode] = useState<'calendar' | 'statement'>('calendar');
 
   const hydrate = useCallback(async () => {
     if (!hasSupabaseEnv) {
@@ -159,15 +161,26 @@ export default function CardDetailScreen() {
 
   const cardCategories = categories;
 
-  // Filter transactions by selected month
+  const selectedPeriod = useMemo(() => {
+    if (!cardDetails) return null;
+
+    if (viewMode === 'calendar') {
+      return getCalendarMonthDates(selectedMonth);
+    }
+
+    return getStatementMonthDatesForSelectedMonth(selectedMonth, cardDetails.statement_day || 1);
+  }, [selectedMonth, cardDetails, viewMode]);
+
+  // Filter transactions by selected period (calendar or statement)
   const filteredTransactions = useMemo(() => {
-    const selectedYear = selectedMonth.getFullYear();
-    const selectedMonthNum = selectedMonth.getMonth();
-    return transactions.filter(t => {
-      const txDate = new Date(t.date);
-      return txDate.getFullYear() === selectedYear && txDate.getMonth() === selectedMonthNum;
+    if (!selectedPeriod) return [];
+
+    const { startDate, endDate } = selectedPeriod;
+    return transactions.filter((transaction) => {
+      const transactionDate = (transaction.date || '').slice(0, 10);
+      return transactionDate >= startDate && transactionDate <= endDate;
     });
-  }, [transactions, selectedMonth]);
+  }, [transactions, selectedPeriod]);
 
   const categoryById = useMemo(() => {
     return new Map(cardCategories.map((category) => [category.id, category]));
@@ -212,6 +225,15 @@ export default function CardDetailScreen() {
 
   const getCardLabel = () => cardDetails?.name || 'Card Details';
 
+  const periodLabel = useMemo(() => {
+    if (!cardDetails) return '';
+    return formatPeriodWithMode(cardDetails, selectedMonth, viewMode);
+  }, [cardDetails, selectedMonth, viewMode]);
+
+  const toggleViewMode = useCallback(() => {
+    setViewMode((previousMode) => (previousMode === 'calendar' ? 'statement' : 'calendar'));
+  }, []);
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: appTheme.colors.background }}>
@@ -251,6 +273,23 @@ export default function CardDetailScreen() {
           <Text variant="bodyMedium" style={{ color: appTheme.colors.error }}>
             {error}
           </Text>
+        </View>
+      )}
+
+      {/* Period View Toggle */}
+      {cardDetails?.statement_day && (
+        <View style={{ paddingHorizontal: 16, paddingTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, flex: 1 }}>
+            {periodLabel}
+          </Text>
+          <Chip
+            mode="outlined"
+            icon={viewMode === 'calendar' ? 'calendar-month-outline' : 'file-document-outline'}
+            onPress={toggleViewMode}
+            compact
+          >
+            {viewMode === 'calendar' ? 'Calendar Month' : 'Statement Period'}
+          </Chip>
         </View>
       )}
 

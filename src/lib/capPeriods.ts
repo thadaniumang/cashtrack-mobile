@@ -88,14 +88,38 @@ export function formatCapPeriod(card: Card, date: Date): string {
   const { startDate, endDate } = getCapPeriodDates(date, card);
   const start = new Date(startDate);
   const end = new Date(endDate);
-  
+
   const formatDate = (d: Date) => {
     return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   };
-  
+
   if (card.cap_period_type === 'calendar_month') {
     return `${formatDate(start)} - ${formatDate(end)}`;
   } else {
     return `${formatDate(start)} - ${formatDate(end)}`;
   }
+}
+
+/**
+ * Month pickers choose only month/year, but a Date may carry any day.
+ * Normalize to day 28 so statement period always maps to the selected month.
+ */
+export function getStatementMonthDatesForSelectedMonth(date: Date, statementDay: number): { startDate: string; endDate: string } {
+  const normalizedDate = new Date(date.getFullYear(), date.getMonth(), 28);
+  return getStatementMonthDates(normalizedDate, statementDay);
+}
+
+/**
+ * Format period for display based on explicit view mode.
+ */
+export function formatPeriodWithMode(card: Card, date: Date, viewMode: 'calendar' | 'statement'): string {
+  const { startDate, endDate } = viewMode === 'calendar'
+    ? getCalendarMonthDates(date)
+    : getStatementMonthDatesForSelectedMonth(date, card.statement_day || 1);
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const formatDate = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+  return `${formatDate(start)} - ${formatDate(end)}`;
 }

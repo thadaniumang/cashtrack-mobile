@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
-import { ActivityIndicator, Button, Checkbox, IconButton, Menu, Text, TextInput } from 'react-native-paper';
+import { ActivityIndicator, Button, Card, Chip, Checkbox, Divider, IconButton, Menu, Surface, Text, TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
@@ -8,6 +8,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { navigationRef } from '../navigation/NavigationService';
 import type { CapPeriodType, CardVariant, RoundingMethod, RewardType } from '../lib/cashbackCore';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 interface BankCardOption {
   id: string;
@@ -42,6 +43,7 @@ function SearchableDropdown({
   customLabel = 'Other (Custom)',
   disabled = false,
 }: SearchableDropdownProps) {
+  const { appTheme } = useTheme();
   const [visible, setVisible] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -62,7 +64,7 @@ function SearchableDropdown({
 
   return (
     <View>
-      <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
+      <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '700', color: appTheme.colors.onSurface }}>
         {label}
       </Text>
       <Menu
@@ -76,8 +78,9 @@ function SearchableDropdown({
             mode="outlined"
             onPress={() => setVisible(true)}
             disabled={disabled}
-            style={{ justifyContent: 'center', borderRadius: 4 }}
-            contentStyle={{ justifyContent: 'space-between', width: '100%' }}
+            style={{ justifyContent: 'center', borderRadius: 14, borderWidth: 1.2, backgroundColor: appTheme.colors.surface }}
+            contentStyle={{ justifyContent: 'space-between', width: '100%', height: 54, paddingHorizontal: 12 }}
+            labelStyle={{ fontWeight: '600' }}
           >
             {selectedLabel}
           </Button>
@@ -177,6 +180,8 @@ export default function AddCardModal() {
   const [closedAt, setClosedAt] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isStatementCap = capPeriodType === 'statement_month';
 
   const cardNameOptions = useMemo(
     () => bankCards.map((card) => ({ label: card.name, value: card.name, description: card.bank })),
@@ -460,48 +465,68 @@ export default function AddCardModal() {
       contentContainerStyle={{ paddingBottom: insets.bottom + 24, backgroundColor: appTheme.colors.background }}
       style={{ backgroundColor: appTheme.colors.background }}
     >
-      <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <View style={{ flex: 1 }}>
-          <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>
-            {cardId ? 'Edit Card' : 'Add New Card'}
-          </Text>
-          <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
-            Configure the card details used by the cashback engine.
-          </Text>
-        </View>
-        <IconButton
-          icon="close"
-          size={22}
-          onPress={() => navigation.goBack()}
-          iconColor={appTheme.colors.onSurfaceVariant}
-          style={{ marginTop: -4 }}
-        />
-      </View>
+      <Surface style={{ margin: 16, borderRadius: 24, overflow: 'hidden', backgroundColor: appTheme.colors.surface, elevation: 2 }}>
+        <View style={{ padding: 20, backgroundColor: appTheme.colors.primaryContainer }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Chip compact style={{ alignSelf: 'flex-start', marginBottom: 12, backgroundColor: appTheme.colors.surface }} textStyle={{ color: appTheme.colors.primary, fontWeight: '700' }}>
+                {cardId ? 'Edit Mode' : 'New Card'}
+              </Chip>
+              <Text variant="headlineSmall" style={{ fontWeight: '800', color: appTheme.colors.onPrimaryContainer }}>
+                {cardId ? 'Edit Card' : 'Add New Card'}
+              </Text>
+              <Text variant="bodyMedium" style={{ color: appTheme.colors.onPrimaryContainer, opacity: 0.9, marginTop: 6, lineHeight: 20 }}>
+                Configure the card, rewards, caps, and behavior in one clean flow.
+              </Text>
+            </View>
+            <IconButton
+              icon="close"
+              size={22}
+              onPress={() => navigation.goBack()}
+              iconColor={appTheme.colors.onPrimaryContainer}
+              style={{ marginTop: -8, backgroundColor: 'rgba(255,255,255,0.14)' }}
+            />
+          </View>
 
-      <View style={{ paddingHorizontal: 16, paddingTop: 20, gap: 16 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+            <Chip compact icon="credit-card-outline" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} textStyle={{ color: appTheme.colors.onPrimaryContainer }}>
+              {variant}
+            </Chip>
+            <Chip compact icon={rewardType === 'miles' ? 'ticket-percent-outline' : 'cash-multiple'} style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} textStyle={{ color: appTheme.colors.onPrimaryContainer }}>
+              {rewardType === 'miles' ? 'Miles' : 'Cashback'}
+            </Chip>
+            <Chip compact icon={isStatementCap ? 'calendar-month' : 'calendar-today'} style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} textStyle={{ color: appTheme.colors.onPrimaryContainer }}>
+              {isStatementCap ? 'Statement cap' : 'Monthly cap'}
+            </Chip>
+          </View>
+        </View>
+
+        <View style={{ padding: 16, gap: 16 }}>
         {cardNameMode === 'custom' ? (
-          <View>
-            <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-              Card Name *
-            </Text>
+          <Card style={{ backgroundColor: appTheme.colors.surfaceVariant, borderRadius: 20 }}>
+            <Card.Content style={{ padding: 16, gap: 12 }}>
+              <Text variant="labelMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>
+                Card Name *
+              </Text>
             <TextInput
               mode="outlined"
               placeholder="e.g., My Custom Card"
               value={cardName}
               onChangeText={setCardName}
               editable={!isSubmitting}
-              style={{ backgroundColor: appTheme.colors.surface }}
+              style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14 }}
             />
             <Button
               mode="text"
               compact
               onPress={() => setCardNameMode('list')}
               disabled={isSubmitting}
-              style={{ alignSelf: 'flex-start', marginTop: 4 }}
+              style={{ alignSelf: 'flex-start', marginTop: 2 }}
             >
               Choose from list instead
             </Button>
-          </View>
+            </Card.Content>
+          </Card>
         ) : (
           <SearchableDropdown
             label="Card Name *"
@@ -521,237 +546,156 @@ export default function AddCardModal() {
           />
         )}
 
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-            Card Network *
-          </Text>
-          <CustomDropdown
-            value={variant}
-            options={CARD_VARIANTS.map((item) => ({ label: item, value: item }))}
-            onSelect={(value) => setVariant(value as CardVariant)}
-            placeholder="Select network"
-            style={{ width: '100%' }}
-          />
-        </View>
-
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-            Reward Type *
-          </Text>
-          <CustomDropdown
-            value={rewardType}
-            options={REWARD_TYPES.map((item) => ({ label: item.label, value: item.value }))}
-            onSelect={(value) => setRewardType(value as RewardType)}
-            placeholder="Select reward type"
-            style={{ width: '100%' }}
-          />
-        </View>
-
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-            Credit Limit
-          </Text>
-          <TextInput
-            mode="outlined"
-            placeholder="500000"
-            value={totalLimit}
-            onChangeText={setTotalLimit}
-            keyboardType="numeric"
-            editable={!isSubmitting}
-            style={{ backgroundColor: appTheme.colors.surface }}
-          />
-        </View>
-
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-            Currency
-          </Text>
-          <CustomDropdown
-            value={currency}
-            options={CURRENCY_OPTIONS}
-            onSelect={(value) => setCurrency(String(value))}
-            placeholder="Select currency"
-            style={{ width: '100%' }}
-          />
-        </View>
-
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-            Minimum Transaction Amount
-          </Text>
-          <TextInput
-            mode="outlined"
-            placeholder="0"
-            value={minTransactionAmount}
-            onChangeText={setMinTransactionAmount}
-            keyboardType="numeric"
-            editable={!isSubmitting}
-            style={{ backgroundColor: appTheme.colors.surface }}
-          />
-          <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
-            Transactions below this amount earn no reward.
-          </Text>
-        </View>
-
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-            Last 4 Digits of Card
-          </Text>
-          <TextInput
-            mode="outlined"
-            placeholder="1234"
-            value={last4Digits}
-            onChangeText={(value) => setLast4Digits(value.replace(/\D/g, '').slice(0, 4))}
-            keyboardType="numeric"
-            editable={!isSubmitting}
-            maxLength={4}
-            style={{ backgroundColor: appTheme.colors.surface }}
-          />
-          <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
-            Optional. Used to improve SMS card matching.
-          </Text>
-        </View>
-
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-            Transaction Amount Rounding
-          </Text>
-          <CustomDropdown
-            value={transactionRounding}
-            options={ROUNDING_OPTIONS}
-            onSelect={(value) => setTransactionRounding(value as RoundingMethod)}
-            placeholder="Select rounding"
-            style={{ width: '100%' }}
-          />
-        </View>
-
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-            Cashback Amount Rounding
-          </Text>
-          <CustomDropdown
-            value={cashbackRounding}
-            options={ROUNDING_OPTIONS}
-            onSelect={(value) => setCashbackRounding(value as RoundingMethod)}
-            placeholder="Select rounding"
-            style={{ width: '100%' }}
-          />
-        </View>
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ flex: 1, paddingRight: 12 }}>
-            <Text variant="labelMedium" style={{ fontWeight: '600' }}>
-              Use Stepped Reward Calculation
+        <Card style={{ borderRadius: 20, backgroundColor: appTheme.colors.surfaceVariant }}>
+          <Card.Content style={{ padding: 16, gap: 14 }}>
+            <Text variant="titleMedium" style={{ fontWeight: '800', color: appTheme.colors.onSurface, marginBottom: 2 }}>
+              Identity
             </Text>
-            <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 2 }}>
-              Round spends down to a multiple before reward calculation.
+            {cardNameMode === 'custom' ? (
+              <View style={{ gap: 12 }}>
+                <TextInput mode="outlined" label="Card Name *" placeholder="e.g., My Custom Card" value={cardName} onChangeText={setCardName} editable={!isSubmitting} style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14 }} />
+                <Button mode="text" compact onPress={() => setCardNameMode('list')} disabled={isSubmitting} style={{ alignSelf: 'flex-start' }}>Choose from list instead</Button>
+              </View>
+            ) : (
+              <SearchableDropdown
+                label="Card Name *"
+                value={cardName}
+                options={cardNameOptions}
+                placeholder="Select a card..."
+                onSelect={(value) => {
+                  setCardName(value);
+                  setCardNameMode('list');
+                }}
+                onCustomSelect={() => {
+                  setCardName('');
+                  setCardNameMode('custom');
+                }}
+                customLabel="Other (Custom card name)"
+                disabled={isSubmitting}
+              />
+            )}
+
+            <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
+              <View style={{ flex: 1, minWidth: 150 }}>
+                <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '700', color: appTheme.colors.onSurface }}>Network</Text>
+                <CustomDropdown value={variant} options={CARD_VARIANTS.map((item) => ({ label: item, value: item }))} onSelect={(value) => setVariant(value as CardVariant)} placeholder="Select network" style={{ width: '100%' }} />
+              </View>
+              <View style={{ flex: 1, minWidth: 150 }}>
+                <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '700', color: appTheme.colors.onSurface }}>Reward Type</Text>
+                <CustomDropdown value={rewardType} options={REWARD_TYPES.map((item) => ({ label: item.label, value: item.value }))} onSelect={(value) => setRewardType(value as RewardType)} placeholder="Select reward type" style={{ width: '100%' }} />
+              </View>
+            </View>
+
+            <Divider />
+
+            <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
+              <View style={{ flex: 1, minWidth: 150 }}>
+                <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '700', color: appTheme.colors.onSurface }}>Credit Limit</Text>
+                <TextInput mode="outlined" placeholder="500000" value={totalLimit} onChangeText={setTotalLimit} keyboardType="numeric" editable={!isSubmitting} style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14 }} />
+              </View>
+              <View style={{ flex: 1, minWidth: 150 }}>
+                <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '700', color: appTheme.colors.onSurface }}>Currency</Text>
+                <CustomDropdown value={currency} options={CURRENCY_OPTIONS} onSelect={(value) => setCurrency(String(value))} placeholder="Select currency" style={{ width: '100%' }} />
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
+              <View style={{ flex: 1, minWidth: 150 }}>
+                <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '700', color: appTheme.colors.onSurface }}>Min Transaction</Text>
+                <TextInput mode="outlined" placeholder="0" value={minTransactionAmount} onChangeText={setMinTransactionAmount} keyboardType="numeric" editable={!isSubmitting} style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14 }} />
+              </View>
+              <View style={{ flex: 1, minWidth: 150 }}>
+                <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '700', color: appTheme.colors.onSurface }}>Last 4 Digits</Text>
+                <TextInput mode="outlined" placeholder="1234" value={last4Digits} onChangeText={(value) => setLast4Digits(value.replace(/\D/g, '').slice(0, 4))} keyboardType="numeric" editable={!isSubmitting} maxLength={4} style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14 }} />
+              </View>
+            </View>
+
+            <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: -6 }}>
+              Optional card identifiers help with precise SMS matching and statement tracking.
             </Text>
-          </View>
-          <Checkbox
-            status={useSteppedCashback ? 'checked' : 'unchecked'}
-            onPress={() => setUseSteppedCashback(!useSteppedCashback)}
-            color={appTheme.colors.primary}
-          />
-        </View>
+          </Card.Content>
+        </Card>
 
-        {useSteppedCashback && (
-          <View>
-            <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-              Step Amount
-            </Text>
-            <TextInput
-              mode="outlined"
-              placeholder="100"
-              value={steppedAmount}
-              onChangeText={setSteppedAmount}
-              keyboardType="numeric"
-              editable={!isSubmitting}
-              style={{ backgroundColor: appTheme.colors.surface }}
-            />
-            <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
-              Example: 100 means 450 is treated as 400 before cashback is calculated.
-            </Text>
-          </View>
-        )}
+        <Card style={{ borderRadius: 20, backgroundColor: appTheme.colors.surfaceVariant }}>
+          <Card.Content style={{ padding: 16, gap: 14 }}>
+            <Text variant="titleMedium" style={{ fontWeight: '800', color: appTheme.colors.onSurface }}>Rules & Caps</Text>
+            <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
+              <View style={{ flex: 1, minWidth: 150 }}>
+                <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '700', color: appTheme.colors.onSurface }}>Transaction Rounding</Text>
+                <CustomDropdown value={transactionRounding} options={ROUNDING_OPTIONS} onSelect={(value) => setTransactionRounding(value as RoundingMethod)} placeholder="Select rounding" style={{ width: '100%' }} />
+              </View>
+              <View style={{ flex: 1, minWidth: 150 }}>
+                <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '700', color: appTheme.colors.onSurface }}>Cashback Rounding</Text>
+                <CustomDropdown value={cashbackRounding} options={ROUNDING_OPTIONS} onSelect={(value) => setCashbackRounding(value as RoundingMethod)} placeholder="Select rounding" style={{ width: '100%' }} />
+              </View>
+            </View>
 
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-            Cap Tracking Period
-          </Text>
-          <CustomDropdown
-            value={capPeriodType}
-            options={CAP_PERIOD_OPTIONS}
-            onSelect={(value) => setCapPeriodType(value as CapPeriodType)}
-            placeholder="Select cap period"
-            style={{ width: '100%' }}
-          />
-          <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
-            {capPeriodType === 'calendar_month'
-              ? 'Caps reset on the first day of each calendar month.'
-              : 'Caps reset based on the card statement cycle.'}
-          </Text>
-        </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: appTheme.colors.surface, borderRadius: 16, padding: 14 }}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Text variant="labelLarge" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Stepped Reward Calculation</Text>
+                <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
+                  Round spend down to a chosen step before rewards are calculated.
+                </Text>
+              </View>
+              <Checkbox status={useSteppedCashback ? 'checked' : 'unchecked'} onPress={() => setUseSteppedCashback(!useSteppedCashback)} color={appTheme.colors.primary} />
+            </View>
 
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600' }}>
-            Statement Cycle Start Day
-          </Text>
-          <TextInput
-            mode="outlined"
-            placeholder="15"
-            value={statementDay}
-            onChangeText={setStatementDay}
-            keyboardType="numeric"
-            editable={!isSubmitting}
-            style={{ backgroundColor: appTheme.colors.surface }}
-          />
-          <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
-            Enter a day from 1 to 28. Example: 15 means the cycle runs from the 15th to the 14th.
-          </Text>
-        </View>
+            {useSteppedCashback && (
+              <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 16, padding: 14, gap: 10 }}>
+                <Text variant="labelMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Step Amount</Text>
+                <TextInput mode="outlined" placeholder="100" value={steppedAmount} onChangeText={setSteppedAmount} keyboardType="numeric" editable={!isSubmitting} style={{ backgroundColor: appTheme.colors.background, borderRadius: 14 }} />
+                <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>
+                  Example: 100 means 450 becomes 400 before cashback calculation.
+                </Text>
+              </View>
+            )}
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text variant="labelMedium" style={{ fontWeight: '600' }}>
-            Card Closed
-          </Text>
-          <Checkbox
-            status={isClosed ? 'checked' : 'unchecked'}
-            onPress={() => setIsClosed(!isClosed)}
-            color={appTheme.colors.primary}
-          />
-        </View>
+            <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 16, padding: 14, gap: 12 }}>
+              <Text variant="labelMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Cap Tracking Period</Text>
+              <CustomDropdown value={capPeriodType} options={CAP_PERIOD_OPTIONS} onSelect={(value) => setCapPeriodType(value as CapPeriodType)} placeholder="Select cap period" style={{ width: '100%' }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <MaterialCommunityIcons name={isStatementCap ? 'calendar-month' : 'calendar-today'} size={18} color={appTheme.colors.primary} />
+                <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, flex: 1 }}>
+                  {isStatementCap ? 'Caps reset based on the card statement cycle.' : 'Caps reset on the first day of each calendar month.'}
+                </Text>
+              </View>
+            </View>
 
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
-          <Button
-            mode="outlined"
-            style={{ flex: 1 }}
-            onPress={() => navigation.goBack()}
-            disabled={isSubmitting}
-          >
+            <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 16, padding: 14, gap: 12 }}>
+              <Text variant="labelMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Statement Cycle Start Day</Text>
+              <TextInput mode="outlined" placeholder="15" value={statementDay} onChangeText={setStatementDay} keyboardType="numeric" editable={!isSubmitting} style={{ backgroundColor: appTheme.colors.background, borderRadius: 14 }} />
+              <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>
+                Enter a day from 1 to 28. Example: 15 means the cycle runs from the 15th to the 14th.
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: appTheme.colors.surface, borderRadius: 16, padding: 14 }}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Text variant="labelLarge" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Card Closed</Text>
+                <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
+                  Closed cards remain visible but won’t be used for new transactions.
+                </Text>
+              </View>
+              <Checkbox status={isClosed ? 'checked' : 'unchecked'} onPress={() => setIsClosed(!isClosed)} color={appTheme.colors.primary} />
+            </View>
+          </Card.Content>
+        </Card>
+
+        <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
+          <Button mode="outlined" style={{ flex: 1, borderRadius: 14 }} onPress={() => navigation.goBack()} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button
-            mode="contained"
-            style={{ flex: 1 }}
-            onPress={handleSaveCard}
-            loading={isSubmitting}
-            disabled={isSubmitting}
-          >
+          <Button mode="contained" style={{ flex: 1, borderRadius: 14 }} contentStyle={{ height: 52 }} onPress={handleSaveCard} loading={isSubmitting} disabled={isSubmitting}>
             {cardId ? 'Save Changes' : 'Add Card'}
           </Button>
         </View>
         {cardId && (
-          <Button
-            mode="outlined"
-            onPress={handleDeleteCard}
-            disabled={isSubmitting}
-            textColor={appTheme.colors.error}
-            style={{ borderColor: appTheme.colors.error }}
-          >
+          <Button mode="outlined" onPress={handleDeleteCard} disabled={isSubmitting} textColor={appTheme.colors.error} style={{ borderColor: appTheme.colors.error, borderRadius: 14, marginTop: 4 }} contentStyle={{ height: 50 }}>
             Delete Card
           </Button>
         )}
       </View>
+      </Surface>
     </ScrollView>
   );
 }

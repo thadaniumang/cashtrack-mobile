@@ -1,7 +1,7 @@
 import type { Card, CardCategory, Transaction } from '../lib/cashbackCore';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, View, RefreshControl, Pressable } from 'react-native';
-import { FAB, Text, ActivityIndicator, IconButton, Snackbar } from 'react-native-paper';
+import { ScrollView, View, RefreshControl, Pressable, StyleSheet } from 'react-native';
+import { FAB, Text, ActivityIndicator, IconButton, Snackbar, Surface } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -53,6 +53,7 @@ export default function DashboardScreen() {
   const [smsSyncing, setSmsSyncing] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarText, setSnackbarText] = useState('');
+  const [addMenuVisible, setAddMenuVisible] = useState(false);
 
   const hydrate = useCallback(async () => {
     if (!hasSupabaseEnv) {
@@ -248,12 +249,6 @@ export default function DashboardScreen() {
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Pressable onPress={() => (navigation as any).navigate('AddCard', { cardId: null })} style={{ padding: 4, width: 44, height: 44, justifyContent: 'center', alignItems: 'center' }}>
-              <MaterialCommunityIcons name="credit-card-plus" size={24} color={appTheme.colors.onSurface} />
-            </Pressable>
-            <Pressable onPress={() => (navigation as any).navigate('AddTransaction')} style={{ padding: 4, width: 44, height: 44, justifyContent: 'center', alignItems: 'center' }}>
-              <MaterialCommunityIcons name="plus" size={24} color={appTheme.colors.onSurface} />
-            </Pressable>
             <IconButton
               icon={smsSyncing ? 'progress-clock' : 'message-reply-text'}
               onPress={async () => {
@@ -498,13 +493,46 @@ export default function DashboardScreen() {
         )}
       </ScrollView>
 
-      <FAB
-        icon="plus"
-        style={{ position: 'absolute', margin: 16, right: 0, bottom: insets.bottom + 40 }}
-        onPress={() => {
-          (navigation as any).navigate('AddTransaction');
-        }}
-      />
+      {addMenuVisible && (
+        <Pressable
+          onPress={() => setAddMenuVisible(false)}
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.18)' }]}
+        />
+      )}
+      <View style={{ position: 'absolute', right: 16, bottom: insets.bottom + 24, alignItems: 'flex-end' }}>
+        {addMenuVisible && (
+          <View style={{ marginBottom: 12, gap: 10, alignItems: 'flex-end' }}>
+            <Pressable
+              onPress={() => {
+                setAddMenuVisible(false);
+                (navigation as any).navigate('AddCard', { cardId: null });
+              }}
+            >
+              <Surface style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, elevation: 4, backgroundColor: appTheme.colors.surface }}>
+                <MaterialCommunityIcons name="credit-card-plus" size={20} color={appTheme.colors.primary} />
+                <Text variant="labelLarge" style={{ color: appTheme.colors.onSurface, fontWeight: '600' }}>Add Card</Text>
+              </Surface>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setAddMenuVisible(false);
+                (navigation as any).navigate('AddTransaction');
+              }}
+            >
+              <Surface style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, elevation: 4, backgroundColor: appTheme.colors.surface }}>
+                <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.primary} />
+                <Text variant="labelLarge" style={{ color: appTheme.colors.onSurface, fontWeight: '600' }}>Add Transaction</Text>
+              </Surface>
+            </Pressable>
+          </View>
+        )}
+
+        <FAB
+          icon={addMenuVisible ? 'close' : 'plus'}
+          onPress={() => setAddMenuVisible((value) => !value)}
+        />
+      </View>
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}

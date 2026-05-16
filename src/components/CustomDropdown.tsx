@@ -29,7 +29,9 @@ export function CustomDropdown({ value, options, onSelect, placeholder, style, d
               }
             }}
             disabled={disabled}
-            style={{ justifyContent: 'center', borderRadius: 4, height: 55 }}
+            style={{ justifyContent: 'center', borderRadius: 14, height: 56, borderWidth: 1.2 }}
+            contentStyle={{ justifyContent: 'space-between', paddingHorizontal: 12, height: 56 }}
+            labelStyle={{ fontWeight: '600' }}
           >
             {selectedLabel}
           </Button>

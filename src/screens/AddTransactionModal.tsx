@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrollView, View, Alert } from 'react-native';
-import { Text, TextInput, Button, Menu, ActivityIndicator, Checkbox, Card, IconButton } from 'react-native-paper';
+import { Text, TextInput, Button, Menu, ActivityIndicator, Checkbox, Card, IconButton, Surface, Chip, Divider } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
 import { calculateValuebackAmounts, calculateValuebackWithCaps, getCapPeriodDates } from '../lib/cashbackCore';
 import { addTransaction, updateTransaction } from '../lib/transactionWriteService';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 const formatCapPeriodText = (card: any): string => {
   if (!card) return 'this period';
@@ -254,6 +255,9 @@ export default function AddTransactionModal() {
 
   const selectedCardObj = cards.find(c => c.id === selectedCard);
   const selectedCategoryObj = allCategories.find(c => c.id === selectedCategory);
+  const selectedCapLabel = selectedCardObj
+    ? (selectedCardObj.cap_period_type === 'statement_month' ? 'Statement month' : 'Calendar month')
+    : 'Cap period';
 
   useEffect(() => {
     if (!selectedCategoryObj || isEditMode) return;
@@ -537,21 +541,29 @@ export default function AddTransactionModal() {
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 24, backgroundColor: appTheme.colors.background }} style={{ backgroundColor: appTheme.colors.background }}>
-      {/* Header */}
-      <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <View style={{ flex: 1 }}>
-          <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>
-            {isEditMode ? 'Edit Transaction' : 'Add Transaction'}
-          </Text>
+      <Surface style={{ margin: 16, borderRadius: 24, overflow: 'hidden', backgroundColor: appTheme.colors.surface, elevation: 2 }}>
+        <View style={{ padding: 20, backgroundColor: appTheme.colors.tertiaryContainer }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Chip compact icon="swap-horizontal" style={{ alignSelf: 'flex-start', marginBottom: 12, backgroundColor: appTheme.colors.surface }} textStyle={{ color: appTheme.colors.tertiary, fontWeight: '700' }}>
+                {isEditMode ? 'Editing transaction' : 'New transaction'}
+              </Chip>
+              <Text variant="headlineSmall" style={{ fontWeight: '800', color: appTheme.colors.onTertiaryContainer }}>
+                {isEditMode ? 'Edit Transaction' : 'Add Transaction'}
+              </Text>
+              <Text variant="bodyMedium" style={{ color: appTheme.colors.onTertiaryContainer, opacity: 0.9, marginTop: 6, lineHeight: 20 }}>
+                Capture spend, card, category, and reward logic in one guided flow.
+              </Text>
+            </View>
+            <IconButton icon="close" size={22} onPress={() => navigation.goBack()} iconColor={appTheme.colors.onTertiaryContainer} style={{ marginTop: -8, backgroundColor: 'rgba(255,255,255,0.14)' }} />
+          </View>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+            <Chip compact icon="credit-card-outline" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} textStyle={{ color: appTheme.colors.onTertiaryContainer }}>{selectedCardObj?.name || 'Select card'}</Chip>
+            <Chip compact icon="shape-outline" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} textStyle={{ color: appTheme.colors.onTertiaryContainer }}>{selectedCategoryObj?.name || 'Select category'}</Chip>
+            <Chip compact icon="calendar-month" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} textStyle={{ color: appTheme.colors.onTertiaryContainer }}>{selectedCapLabel}</Chip>
+          </View>
         </View>
-        <IconButton
-          icon="close"
-          size={22}
-          onPress={() => navigation.goBack()}
-          iconColor={appTheme.colors.onSurfaceVariant}
-          style={{ marginTop: -4 }}
-        />
-      </View>
 
       {!initialLoadComplete ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 48 }}>
@@ -559,293 +571,177 @@ export default function AddTransactionModal() {
         </View>
       ) : (
         <>
-          {/* Form */}
-          <View style={{ paddingHorizontal: 16, paddingTop: 24, gap: 16 }}>
-        {/* Card Selection Dropdown */}
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600', color: appTheme.colors.onSurface }}>
-            Card *
-          </Text>
-          {cardContextLocked ? (
-            <Card style={{ backgroundColor: appTheme.colors.surfaceVariant }}>
-              <Card.Content style={{ paddingVertical: 12 }}>
-                <Text variant="titleSmall" style={{ fontWeight: '600' }}>
-                  {selectedCardObj?.name || 'Selected card'}
-                </Text>
-                <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
-                  This transaction will be saved to the selected card.
-                </Text>
+          <View style={{ paddingHorizontal: 16, paddingTop: 20, gap: 14 }}>
+            <Card style={{ backgroundColor: appTheme.colors.surfaceVariant, borderRadius: 20 }}>
+              <Card.Content style={{ padding: 16, gap: 14 }}>
+                <Text variant="titleMedium" style={{ fontWeight: '800', color: appTheme.colors.onSurface }}>Transaction Details</Text>
+
+                <View style={{ gap: 12 }}>
+                  <Text variant="labelMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Card *</Text>
+                  {cardContextLocked ? (
+                    <Card style={{ backgroundColor: appTheme.colors.background, borderRadius: 14 }}>
+                      <Card.Content style={{ paddingVertical: 12 }}>
+                        <Text variant="titleSmall" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>{selectedCardObj?.name || 'Selected card'}</Text>
+                        <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>This transaction will be saved to the selected card.</Text>
+                      </Card.Content>
+                    </Card>
+                  ) : (
+                    <Menu visible={cardMenuVisible} onDismiss={() => setCardMenuVisible(false)} anchor={<Button mode="outlined" onPress={() => setCardMenuVisible(true)} style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14 }} contentStyle={{ height: 54 }} disabled={loading}>{selectedCardObj?.name || 'Select card'}</Button>}>
+                      {cards.map((card) => (
+                        <Menu.Item key={card.id} onPress={() => { setSelectedCard(card.id); setSelectedCategory(null); setCardMenuVisible(false); }} title={card.name} />
+                      ))}
+                    </Menu>
+                  )}
+                </View>
+
+                {selectedCard && (
+                  <View style={{ gap: 12 }}>
+                    <Text variant="labelMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Category {categoriesForCard.length === 0 ? '' : '*'}</Text>
+                    {categoryContextLocked && selectedCategoryObj ? (
+                      <Card style={{ backgroundColor: appTheme.colors.background, borderRadius: 14 }}>
+                        <Card.Content style={{ paddingVertical: 12 }}>
+                          <Text variant="titleSmall" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>{selectedCategoryObj.name}</Text>
+                          <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>Category is preselected from the current context.</Text>
+                        </Card.Content>
+                      </Card>
+                    ) : categoriesForCard.length > 0 ? (
+                      <Menu visible={categoryMenuVisible} onDismiss={() => setCategoryMenuVisible(false)} anchor={<Button mode="outlined" onPress={() => setCategoryMenuVisible(true)} style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14 }} contentStyle={{ height: 54 }} disabled={loading}>{categoriesForCard.find((c) => c.id === selectedCategory)?.name || 'Select category'}</Button>}>
+                        {categoriesForCard.map((category) => (
+                          <Menu.Item key={category.id} onPress={() => { setSelectedCategory(category.id); setCategoryMenuVisible(false); }} title={`${category.name} (${(category.base_cashback_pct || 0) + (category.accelerated_cashback_pct || 0) + (category.other_cashback_pct || 0)}%)`} />
+                        ))}
+                      </Menu>
+                    ) : (
+                      <Text variant="bodySmall" style={{ color: appTheme.colors.error }}>No categories defined for this card. Add one on the card details page.</Text>
+                    )}
+                  </View>
+                )}
+
+                <Divider />
+
+                <View style={{ gap: 12 }}>
+                  <Text variant="labelMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Transaction Amount *</Text>
+                  <TextInput mode="outlined" placeholder="0.00" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" disabled={loading} style={{ backgroundColor: appTheme.colors.background, borderRadius: 14 }} />
+                </View>
+
+                <View style={{ backgroundColor: appTheme.colors.background, borderRadius: 16, padding: 14, gap: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ flex: 1, paddingRight: 12 }}>
+                      <Text variant="labelLarge" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Same as Transaction Amount</Text>
+                      <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>Toggle off when the actual paid amount differs from the transaction amount.</Text>
+                    </View>
+                    <Checkbox status={sameAsTransactionAmount ? 'checked' : 'unchecked'} onPress={() => setSameAsTransactionAmount(!sameAsTransactionAmount)} />
+                  </View>
+                  {!sameAsTransactionAmount && (
+                    <TextInput mode="outlined" label="Actual Amount" placeholder="0.00" value={actualAmount} onChangeText={setActualAmount} keyboardType="decimal-pad" disabled={loading} style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14 }} />
+                  )}
+                </View>
               </Card.Content>
             </Card>
-          ) : (
-            <Menu
-              visible={cardMenuVisible}
-              onDismiss={() => setCardMenuVisible(false)}
-              anchor={
-                <Button
-                  mode="outlined"
-                  onPress={() => setCardMenuVisible(true)}
-                  style={{ backgroundColor: appTheme.colors.surface }}
-                  disabled={loading}
-                >
-                  {selectedCardObj?.name || 'Select card'}
-                </Button>
-              }
-            >
-              {cards.map((card) => (
-                <Menu.Item
-                  key={card.id}
-                  onPress={() => {
-                    setSelectedCard(card.id);
-                    setSelectedCategory(null);
-                    setCardMenuVisible(false);
-                  }}
-                  title={card.name}
-                />
-              ))}
-            </Menu>
-          )}
-        </View>
 
-        {/* Category Selection - Only show after card selected */}
-        {selectedCard && (
-          <View>
-            <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600', color: appTheme.colors.onSurface }}>
-              Category {categoriesForCard.length === 0 ? '' : '*'}
-            </Text>
-            {categoryContextLocked && selectedCategoryObj ? (
-              <Card style={{ backgroundColor: appTheme.colors.surfaceVariant }}>
-                <Card.Content style={{ paddingVertical: 12 }}>
-                  <Text variant="titleSmall" style={{ fontWeight: '600' }}>
-                    {selectedCategoryObj.name}
-                  </Text>
-                  <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
-                    Category is preselected from the current context.
-                  </Text>
-                </Card.Content>
-              </Card>
-            ) : (
-              categoriesForCard.length > 0 ? (
-                <Menu
-                  visible={categoryMenuVisible}
-                  onDismiss={() => setCategoryMenuVisible(false)}
-                  anchor={
-                    <Button
-                      mode="outlined"
-                      onPress={() => setCategoryMenuVisible(true)}
-                      style={{ backgroundColor: appTheme.colors.surface }}
-                      disabled={loading}
-                    >
-                      {categoriesForCard.find(c => c.id === selectedCategory)?.name || 'Select category'}
-                    </Button>
-                  }
-                >
-                  {categoriesForCard.map((category) => (
-                    <Menu.Item
-                      key={category.id}
-                      onPress={() => {
-                        setSelectedCategory(category.id);
-                        setCategoryMenuVisible(false);
-                      }}
-                      title={`${category.name} (${(category.base_cashback_pct || 0) + (category.accelerated_cashback_pct || 0) + (category.other_cashback_pct || 0)}%)`}
-                    />
-                  ))}
-                </Menu>
-              ) : (
-                <Text variant="bodySmall" style={{ color: appTheme.colors.error }}>
-                  No categories defined for this card. Add one on the card details page.
-                </Text>
-              )
+            <Card style={{ backgroundColor: appTheme.colors.surfaceVariant, borderRadius: 20 }}>
+              <Card.Content style={{ padding: 16, gap: 14 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flex: 1, paddingRight: 12 }}>
+                    <Text variant="titleMedium" style={{ fontWeight: '800', color: appTheme.colors.onSurface }}>Reward Preview</Text>
+                    <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>See how reward tiers and caps affect this transaction before saving.</Text>
+                  </View>
+                  <Checkbox status={useCustomCashback ? 'checked' : 'unchecked'} onPress={() => setUseCustomCashback(!useCustomCashback)} color={appTheme.colors.primary} />
+                </View>
+
+                {useCustomCashback && (
+                  <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 16, padding: 14, gap: 12 }}>
+                    <Text variant="labelLarge" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Custom Cashback Overrides</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>
+                      <View style={{ width: '50%', paddingHorizontal: 6, marginBottom: 12 }}>
+                        <TextInput
+                          mode="outlined"
+                          label="Base %"
+                          value={customBasePct}
+                          onChangeText={setCustomBasePct}
+                          placeholder="0.00"
+                          keyboardType="decimal-pad"
+                          style={{ width: '100%', backgroundColor: appTheme.colors.background, borderRadius: 14 }}
+                        />
+                      </View>
+                      <View style={{ width: '50%', paddingHorizontal: 6, marginBottom: 12 }}>
+                        <TextInput
+                          mode="outlined"
+                          label="Accelerated %"
+                          value={customAcceleratedPct}
+                          onChangeText={setCustomAcceleratedPct}
+                          placeholder="0.00"
+                          keyboardType="decimal-pad"
+                          style={{ width: '100%', backgroundColor: appTheme.colors.background, borderRadius: 14 }}
+                        />
+                      </View>
+                      <View style={{ width: '100%', paddingHorizontal: 6 }}>
+                        <TextInput
+                          mode="outlined"
+                          label="Other %"
+                          value={customOtherPct}
+                          onChangeText={setCustomOtherPct}
+                          placeholder="0.00"
+                          keyboardType="decimal-pad"
+                          style={{ width: '100%', backgroundColor: appTheme.colors.background, borderRadius: 14 }}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {parsedAmount > 0 && selectedCategory && (
+                  <View style={{ gap: 12 }}>
+                    {isCapApplied && cappedValueback && (
+                      <View style={{ padding: 12, backgroundColor: appTheme.colors.warningContainer, borderRadius: 16, gap: 6 }}>
+                        <Text style={{ color: appTheme.colors.onWarningContainer, fontWeight: '700' }}>Category cap applied</Text>
+                        <Text style={{ color: appTheme.colors.onWarningContainer }}>{`Showing capped total ₹${cappedValueback.total.toFixed(2)} ${formatCapPeriodText(selectedCard ? cards.find((c) => c.id === selectedCard) : null)}`}</Text>
+                      </View>
+                    )}
+
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>
+                      {[
+                        { label: 'Base', value: (cappedValueback ? cappedValueback.base : rawValueback.base).toFixed(2), color: appTheme.colors.success, icon: 'alpha-b-box' },
+                        { label: 'Accelerated', value: (cappedValueback ? cappedValueback.accelerated : rawValueback.accelerated).toFixed(2), color: appTheme.colors.info, icon: 'speedometer' },
+                        { label: 'Other', value: (cappedValueback ? cappedValueback.other : rawValueback.other).toFixed(2), color: appTheme.colors.warning, icon: 'dots-horizontal' },
+                      ].map((item, index) => (
+                        <View key={item.label} style={{ width: index < 2 ? '50%' : '100%', paddingHorizontal: 6, marginBottom: index < 2 ? 12 : 0 }}>
+                          <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 18, padding: 14, alignItems: 'center', gap: 6 }}>
+                            <MaterialCommunityIcons name={item.icon as any} size={22} color={item.color} />
+                            <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant }}>{item.label}</Text>
+                            <Text variant="titleMedium" style={{ fontWeight: '800', color: item.color }}>₹{item.value}</Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+
+                    <View style={{ paddingTop: 12, borderTopWidth: 1, borderTopColor: appTheme.colors.surfaceVariant, alignItems: 'center' }}>
+                      <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>Total Expected</Text>
+                      <Text variant="headlineSmall" style={{ fontWeight: 'bold', color: appTheme.colors.primary }}>₹{(cappedValueback ? cappedValueback.total : rawValueback.total).toFixed(2)}</Text>
+                    </View>
+                  </View>
+                )}
+              </Card.Content>
+            </Card>
+
+            <Card style={{ backgroundColor: appTheme.colors.surfaceVariant, borderRadius: 20 }}>
+              <Card.Content style={{ padding: 16, gap: 12 }}>
+                <Text variant="titleMedium" style={{ fontWeight: '800', color: appTheme.colors.onSurface }}>Notes</Text>
+                <TextInput mode="outlined" label="Description (optional)" placeholder="e.g., Hotel booking via SmartBuy" value={notes} onChangeText={setNotes} maxLength={200} multiline numberOfLines={3} disabled={loading} style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14 }} />
+                <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant }}>{notes.length}/200</Text>
+              </Card.Content>
+            </Card>
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
+              <Button mode="outlined" style={{ flex: 1, borderRadius: 14 }} onPress={() => { resetTransactionForm(); navigation.goBack(); }} disabled={loading}>Cancel</Button>
+              <Button mode="contained" style={{ flex: 1, borderRadius: 14 }} contentStyle={{ height: 52 }} onPress={handleAddTransaction} loading={loading} disabled={loading || !selectedCard || !selectedCategory}>{isEditMode ? 'Update' : 'Add'}</Button>
+            </View>
+            {isEditMode && (
+              <Button mode="outlined" style={{ borderRadius: 14, borderColor: appTheme.colors.error }} contentStyle={{ height: 50 }} onPress={handleDeleteTransaction} disabled={loading} textColor={appTheme.colors.error}>Delete Transaction</Button>
             )}
-          </View>
-        )}
-
-        {/* Amount */}
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600', color: appTheme.colors.onSurface }}>
-            Transaction Amount *
-          </Text>
-          <TextInput
-            mode="outlined"
-            placeholder="0.00"
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="decimal-pad"
-            disabled={loading}
-            style={{ backgroundColor: appTheme.colors.surface }}
-          />
-        </View>
-
-        {/* Actual Amount Toggle */}
-        <View style={{ padding: 12, backgroundColor: appTheme.colors.surface, borderRadius: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: sameAsTransactionAmount ? 0 : 12 }}>
-            <Button
-              mode={sameAsTransactionAmount ? 'contained' : 'outlined'}
-              onPress={() => setSameAsTransactionAmount(!sameAsTransactionAmount)}
-              disabled={loading}
-              compact
-            >
-              {sameAsTransactionAmount ? '✓' : ''} Same as Transaction
-            </Button>
-          </View>
-          {!sameAsTransactionAmount && (
-            <View>
-              <Text variant="labelSmall" style={{ marginBottom: 8, color: appTheme.colors.onSurfaceVariant }}>
-                Actual Amount (Original price before discounts)
-              </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="0.00"
-                value={actualAmount}
-                onChangeText={setActualAmount}
-                keyboardType="decimal-pad"
-                disabled={loading}
-                style={{ backgroundColor: appTheme.colors.background }}
-              />
-            </View>
-          )}
-        </View>
-
-        {/* Custom Cashback Override + Expected Valueback Preview */}
-        <View style={{ padding: 12, backgroundColor: appTheme.colors.surface, borderRadius: 8, gap: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Checkbox
-              status={useCustomCashback ? 'checked' : 'unchecked'}
-              onPress={() => setUseCustomCashback(!useCustomCashback)}
-            />
-            <Text variant="bodyMedium">Use custom cashback percentages (override)</Text>
-          </View>
-
-          {useCustomCashback && (
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Text variant="labelSmall" style={{ marginBottom: 8 }}>
-                  Base %
-                </Text>
-                <TextInput value={customBasePct} onChangeText={setCustomBasePct} placeholder="0.00" keyboardType="decimal-pad" mode="outlined" style={{ backgroundColor: appTheme.colors.surface }} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text variant="labelSmall" style={{ marginBottom: 8 }}>
-                  Accelerated %
-                </Text>
-                <TextInput value={customAcceleratedPct} onChangeText={setCustomAcceleratedPct} placeholder="0.00" keyboardType="decimal-pad" mode="outlined" style={{ backgroundColor: appTheme.colors.surface }} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text variant="labelSmall" style={{ marginBottom: 8 }}>
-                  Other %
-                </Text>
-                <TextInput value={customOtherPct} onChangeText={setCustomOtherPct} placeholder="0.00" keyboardType="decimal-pad" mode="outlined" style={{ backgroundColor: appTheme.colors.surface }} />
-              </View>
-            </View>
-          )}
-
-          {parsedAmount > 0 && selectedCategory && (
-            <View>
-              {isCapApplied && cappedValueback && (
-                <View style={{ padding: 8, backgroundColor: appTheme.colors.warningContainer, borderRadius: 6, marginBottom: 8 }}>
-                  <Text style={{ color: appTheme.colors.onWarningContainer }}>{`Rewards reduced due to category cap. Showing capped total ₹${cappedValueback.total.toFixed(2)} ${formatCapPeriodText(selectedCard ? cards.find(c => c.id === selectedCard) : null)}`}</Text>
-                </View>
-              )}
-
-              <View style={{ flexDirection: 'row', justifyContent: 'space-around', gap: 8 }}>
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                  <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                    Base
-                  </Text>
-                  <Text variant="bodyMedium" style={{ fontWeight: '600', color: appTheme.colors.success }}>
-                    ₹{(cappedValueback ? cappedValueback.base : rawValueback.base).toFixed(2)}
-                  </Text>
-                </View>
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                  <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                    Accelerated
-                  </Text>
-                  <Text variant="bodyMedium" style={{ fontWeight: '600', color: appTheme.colors.info }}>
-                    ₹{(cappedValueback ? cappedValueback.accelerated : rawValueback.accelerated).toFixed(2)}
-                  </Text>
-                </View>
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                  <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                    Other
-                  </Text>
-                  <Text variant="bodyMedium" style={{ fontWeight: '600', color: appTheme.colors.warning }}>
-                    ₹{(cappedValueback ? cappedValueback.other : rawValueback.other).toFixed(2)}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={{ paddingTop: 12, borderTopWidth: 1, borderTopColor: appTheme.colors.surfaceVariant, alignItems: 'center' }}>
-                <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                  Total Expected
-                </Text>
-                <Text variant="headlineSmall" style={{ fontWeight: 'bold', color: appTheme.colors.primary }}>
-                  ₹{(cappedValueback ? cappedValueback.total : rawValueback.total).toFixed(2)}
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* Notes Field */}
-        <View>
-          <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600', color: appTheme.colors.onSurface }}>
-            Description (optional)
-          </Text>
-          <TextInput
-            mode="outlined"
-            placeholder="e.g., Hotel booking via SmartBuy"
-            value={notes}
-            onChangeText={setNotes}
-            maxLength={200}
-            multiline
-            numberOfLines={2}
-            disabled={loading}
-            style={{ backgroundColor: appTheme.colors.surface, paddingVertical: 8 }}
-          />
-          <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
-            {notes.length}/200
-          </Text>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={{ flexDirection: 'column', gap: 12, marginTop: 24 }}>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Button
-              mode="outlined"
-              style={{ flex: 1 }}
-              onPress={() => {
-                resetTransactionForm();
-                navigation.goBack();
-              }}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              mode="contained"
-              style={{ flex: 1 }}
-              onPress={handleAddTransaction}
-              loading={loading}
-              disabled={loading || !selectedCard || !selectedCategory}
-            >
-              {isEditMode ? 'Update' : 'Add'}
-            </Button>
-          </View>
-          {isEditMode && (
-            <Button
-              mode="outlined"
-              style={{ flex: 1 }}
-              onPress={handleDeleteTransaction}
-              disabled={loading}
-              textColor={appTheme.colors.error}
-            >
-              Delete Transaction
-            </Button>
-          )}
-        </View>
           </View>
         </>
       )}
+      </Surface>
     </ScrollView>
   );
 }
