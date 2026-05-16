@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, ProgressBar, TouchableRipple, useTheme } from 'react-native-paper';
-import type { CardCategory, CapConfig, CapType } from '../lib/cashbackCore';
+import type { CardCategory, CapConfig, CapType, CapPeriodType } from '../lib/cashbackCore';
 
 type Props = {
   category: CardCategory;
@@ -10,6 +10,8 @@ type Props = {
   otherCashbackUsed?: number | null;
   currency?: string;
   onPress?: () => void;
+  cardCapPeriodType?: CapPeriodType;
+  cardStatementDay?: number | null;
 };
 
 function resolveCaps(category: CardCategory, tier: 'base' | 'accelerated' | 'other'): CapConfig[] {
@@ -28,8 +30,21 @@ function resolveCaps(category: CardCategory, tier: 'base' | 'accelerated' | 'oth
   return [{ cap_type: legacyType, cap_amount: legacyAmount }];
 }
 
-function formatCapType(capType: CapType) {
-  if (capType === 'monthly') return 'monthly';
+function formatCapType(capType: CapType, cardCapPeriodType?: CapPeriodType, cardStatementDay?: number | null) {
+  if (capType === 'monthly') {
+    if (cardCapPeriodType === 'statement_month') {
+      return `statement month${cardStatementDay ? ` (${cardStatementDay}th)` : ''} cap`;
+    }
+    return 'monthly cap';
+  }
+  if (capType === 'per_transaction') return 'per transaction';
+  return `${capType} cap`;
+}
+
+function formatCapTypeSummary(capType: CapType, cardCapPeriodType?: CapPeriodType): string {
+  if (capType === 'monthly') {
+    return cardCapPeriodType === 'statement_month' ? 'statement month' : 'monthly';
+  }
   if (capType === 'per_transaction') return 'per transaction';
   return capType;
 }
@@ -46,7 +61,9 @@ export default function CategoryRow({
   acceleratedCashbackUsed = 0, 
   otherCashbackUsed = 0,
   currency = '₹', 
-  onPress 
+  onPress,
+  cardCapPeriodType = 'calendar_month',
+  cardStatementDay = null,
 }: Props) {
   const theme = useTheme();
   const baseCashback = baseCashbackUsed ?? 0;
@@ -73,7 +90,7 @@ export default function CategoryRow({
               <View style={styles.progressWrap} key={`base-${index}`}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                   <Text variant="bodySmall" style={styles.muted}>
-                    Base: {currency}{cap.cap_amount.toLocaleString()} ({category.base_cashback_pct}%)
+                    Base: {currency}{cap.cap_amount.toLocaleString()} ({formatCapTypeSummary(cap.cap_type, cardCapPeriodType)})
                   </Text>
                   <Text variant="bodySmall" style={styles.muted}>
                     {currency}{remaining.toLocaleString()} left
@@ -92,7 +109,7 @@ export default function CategoryRow({
               <View style={styles.progressWrap} key={`accelerated-${index}`}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                   <Text variant="bodySmall" style={styles.muted}>
-                    Accelerated: {currency}{cap.cap_amount.toLocaleString()} ({category.accelerated_cashback_pct}%)
+                    Accelerated: {currency}{cap.cap_amount.toLocaleString()} ({formatCapTypeSummary(cap.cap_type, cardCapPeriodType)})
                   </Text>
                   <Text variant="bodySmall" style={styles.muted}>
                     {currency}{remaining.toLocaleString()} left
@@ -111,7 +128,7 @@ export default function CategoryRow({
               <View style={styles.progressWrap} key={`other-${index}`}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
                   <Text variant="bodySmall" style={styles.muted}>
-                    Other: {currency}{cap.cap_amount.toLocaleString()} ({category.other_cashback_pct}%)
+                    Other: {currency}{cap.cap_amount.toLocaleString()} ({formatCapTypeSummary(cap.cap_type, cardCapPeriodType)})
                   </Text>
                   <Text variant="bodySmall" style={styles.muted}>
                     {currency}{remaining.toLocaleString()} left

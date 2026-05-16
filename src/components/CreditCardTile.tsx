@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, ViewStyle, Pressable } from 'react-native';
-import { Card, Text } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Card, Text, useTheme } from 'react-native-paper';
 
 interface CreditCardTileProps {
   cardName: string;
@@ -14,19 +13,19 @@ interface CreditCardTileProps {
   style?: ViewStyle;
 }
 
-const getCardGradient = (variant?: string) => {
+const getCardGradient = (variant?: string, theme?: any) => {
   switch (variant?.toLowerCase()) {
     case 'visa':
-      return { bg: '#1a1f71', accent: '#1434CB' };
+      return { bg: theme.colors.cardVisaBg, accent: theme.colors.cardVisaAccent };
     case 'mastercard':
-      return { bg: '#eb001b', accent: '#ff5f00' };
+      return { bg: theme.colors.cardMastercardBg, accent: theme.colors.cardMastercardAccent };
     case 'amex':
     case 'american express':
-      return { bg: '#006fcf', accent: '#00a8e1' };
+      return { bg: theme.colors.cardAmexBg, accent: theme.colors.cardAmexAccent };
     case 'rupay':
-      return { bg: '#ff6b6b', accent: '#ff8c8c' };
+      return { bg: theme.colors.cardRupayBg, accent: theme.colors.cardRupayAccent };
     default:
-      return { bg: '#333333', accent: '#666666' };
+      return { bg: theme.colors.cardDefaultBg, accent: theme.colors.cardDefaultAccent };
   }
 };
 
@@ -40,8 +39,9 @@ export function CreditCardTile({
   onPress,
   style,
 }: CreditCardTileProps) {
+  const theme = useTheme();
   const normalizedBrand = cardBrand || 'Other';
-  const gradient = getCardGradient(cardBrand);
+  const gradient = getCardGradient(cardBrand, theme);
   const rewardLabel = rewardType === 'miles' ? 'Miles' : 'Cashback';
   const rewardValue = rewardType === 'miles' ? cashback.toLocaleString() : `₹${cashback.toLocaleString()}`;
 
@@ -52,13 +52,13 @@ export function CreditCardTile({
           <View style={{ marginBottom: 32 }}>
             <Text
               variant="bodyMedium"
-              style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 2 }}
+              style={{ color: theme.colors.onSurfaceVariant, marginBottom: 2 }}
             >
               {normalizedBrand.toUpperCase()}
             </Text>
             <Text
               variant="titleLarge"
-              style={{ color: 'white', fontWeight: 'bold' }}
+              style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
             >
               {cardName}
             </Text>
@@ -68,13 +68,13 @@ export function CreditCardTile({
             <View>
               <Text
                 variant="labelLarge"
-                style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}
+                style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4 }}
               >
                 Expected {rewardLabel}
               </Text>
               <Text
                 variant="bodyLarge"
-                style={{ color: 'white', fontWeight: 'bold' }}
+                style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
               >
                 {rewardValue}
               </Text>
@@ -82,13 +82,13 @@ export function CreditCardTile({
             <View style={{ alignItems: 'flex-end' }}>
               <Text
                 variant="labelLarge"
-                style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}
+                style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4 }}
               >
                 Spends
               </Text>
               <Text
                 variant="bodyLarge"
-                style={{ color: 'white', fontWeight: 'bold' }}
+                style={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
               >
                 ₹{spends.toLocaleString()}
               </Text>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle } from 'react-native';
-import { Card, Text } from 'react-native-paper';
+import { Card, Text, useTheme } from 'react-native-paper';
 
 interface StatsCardProps {
   title: string;
@@ -11,9 +11,10 @@ interface StatsCardProps {
 }
 
 export function StatsCard({ title, value, rewardType = 'cashback', subtitle, style }: StatsCardProps) {
-  const bgColor = rewardType === 'miles' ? '#430d4f' : '#0f6315';
-  const textColor = rewardType === 'miles' ? '#e5c6f7' : '#cafacd';
-  const accentColor = rewardType === 'miles' ? '#efbcf7' : '#b9fabc';
+  const theme = useTheme();
+  const bgColor = rewardType === 'miles' ? theme.colors.rewardMilesBg : theme.colors.rewardCashbackBg;
+  const textColor = rewardType === 'miles' ? theme.colors.rewardMilesText : theme.colors.rewardCashbackText;
+  const accentColor = rewardType === 'miles' ? theme.colors.rewardMilesAccent : theme.colors.rewardCashbackAccent;
 
   return (
     <Card style={[{ backgroundColor: bgColor }, style]}>

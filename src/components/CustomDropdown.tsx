@@ -8,9 +8,10 @@ interface CustomDropdownProps {
   onSelect: (value: string | number) => void;
   placeholder?: string;
   style?: ViewStyle;
+  disabled?: boolean;
 }
 
-export function CustomDropdown({ value, options, onSelect, placeholder, style }: CustomDropdownProps) {
+export function CustomDropdown({ value, options, onSelect, placeholder, style, disabled = false }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selectedLabel = options.find((opt) => opt.value === value)?.label || placeholder || String(value);
 
@@ -22,8 +23,13 @@ export function CustomDropdown({ value, options, onSelect, placeholder, style }:
         anchor={
           <Button
             mode="outlined"
-            onPress={() => setIsOpen(true)}
-            style={{ justifyContent: 'center', borderRadius: 4 }}
+            onPress={() => {
+              if (!disabled) {
+                setIsOpen(true);
+              }
+            }}
+            disabled={disabled}
+            style={{ justifyContent: 'center', borderRadius: 4, height: 55 }}
           >
             {selectedLabel}
           </Button>

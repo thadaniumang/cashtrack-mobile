@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Pressable, ViewStyle } from 'react-native';
-import { Text } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Text, useTheme } from 'react-native-paper';
 
 interface TransactionRowProps {
   title: string;
@@ -24,13 +23,14 @@ export function TransactionRow({
   onPress,
   style,
 }: TransactionRowProps) {
+  const theme = useTheme();
   const categoryColors: { [key: string]: string } = {
-    food: '#FF6B6B',
-    travel: '#4ECDC4',
-    shopping: '#FFE66D',
-    utilities: '#95E1D3',
-    entertainment: '#C7CEEA',
-    default: '#B0BEC5',
+    food: theme.colors.categoryFood,
+    travel: theme.colors.categoryTravel,
+    shopping: theme.colors.categoryShopping,
+    utilities: theme.colors.categoryUtilities,
+    entertainment: theme.colors.categoryEntertainment,
+    default: theme.colors.categoryDefault,
   };
 
   const safeSubtitle = typeof subtitle === 'string' ? subtitle : (subtitle ? String(subtitle) : '');
@@ -45,7 +45,7 @@ export function TransactionRow({
             paddingVertical: 12,
             paddingHorizontal: 16,
             borderBottomWidth: 1,
-            borderBottomColor: 'rgba(255,255,255,0.06)',
+            borderBottomColor: theme.colors.outlineVariant,
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -62,10 +62,13 @@ export function TransactionRow({
             }}
           >
             <View style={{ flex: 1 }}>
-              <Text variant="bodyMedium" style={{ fontWeight: '500' }} numberOfLines={1}>
-                {title}
-              </Text>
-              <Text variant="bodySmall" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 999, backgroundColor: categoryColor }} />
+                <Text variant="bodyMedium" style={{ fontWeight: '500', color: theme.colors.onSurface }} numberOfLines={1}>
+                  {title}
+                </Text>
+              </View>
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
                 {subtitle}
               </Text>
             </View>
@@ -75,19 +78,19 @@ export function TransactionRow({
         <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
           <Text
             variant="bodyMedium"
-            style={{ fontWeight: '600', marginBottom: 2 }}
+            style={{ fontWeight: '600', marginBottom: 2, color: theme.colors.onSurface }}
           >
             ₹{amount.toLocaleString()}
           </Text>
           <Text
             variant="bodySmall"
-            style={{ color: '#2e7d32', fontWeight: '500' }}
+            style={{ color: theme.colors.success, fontWeight: '500' }}
           >
             +₹{cashback.toLocaleString()}
           </Text>
           <Text
             variant="labelSmall"
-            style={{ color: '#999', marginTop: 2 }}
+            style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}
           >
             {date}
           </Text>

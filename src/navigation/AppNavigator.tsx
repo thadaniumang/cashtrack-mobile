@@ -86,11 +86,13 @@ export default function AppNavigator() {
           backgroundColor: appTheme.colors.surface,
           borderTopColor: appTheme.colors.surfaceVariant,
           borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 2,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
-          marginTop: -4,
         },
       })}
     >

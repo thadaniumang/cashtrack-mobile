@@ -67,7 +67,7 @@ export default function SettingsScreen() {
                   <Text variant="bodyMedium" style={{ fontWeight: '500' }}>
                     Email
                   </Text>
-                  <Text variant="bodySmall" style={{ color: '#666', marginTop: 4 }}>
+                  <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
                     {user?.email}
                   </Text>
                 </View>
@@ -77,7 +77,7 @@ export default function SettingsScreen() {
                 <Text variant="bodyMedium" style={{ fontWeight: '500' }}>
                   Member Since
                 </Text>
-                <Text variant="bodySmall" style={{ color: '#666' }}>
+                <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>
                   {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                 </Text>
               </View>
@@ -155,7 +155,7 @@ export default function SettingsScreen() {
         <View style={{ paddingHorizontal: 16, paddingTop: 24, marginBottom: 16 }}>
           <Button
             mode="contained"
-            buttonColor="#dc2626"
+            buttonColor={appTheme.colors.error}
             onPress={() => setShowSignOutDialog(true)}
             loading={loading}
             disabled={loading}
@@ -198,7 +198,7 @@ export default function SettingsScreen() {
               onPress={handleSignOut}
               loading={loading}
               disabled={loading}
-              textColor="#dc2626"
+              textColor={appTheme.colors.error}
             >
               Sign Out
             </Button>

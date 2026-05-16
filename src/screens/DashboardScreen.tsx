@@ -248,7 +248,7 @@ export default function DashboardScreen() {
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Pressable onPress={() => (navigation as any).navigate('AddCard')} style={{ padding: 4, width: 44, height: 44, justifyContent: 'center', alignItems: 'center' }}>
+            <Pressable onPress={() => (navigation as any).navigate('AddCard', { cardId: null })} style={{ padding: 4, width: 44, height: 44, justifyContent: 'center', alignItems: 'center' }}>
               <MaterialCommunityIcons name="credit-card-plus" size={24} color={appTheme.colors.onSurface} />
             </Pressable>
             <Pressable onPress={() => (navigation as any).navigate('AddTransaction')} style={{ padding: 4, width: 44, height: 44, justifyContent: 'center', alignItems: 'center' }}>
@@ -356,7 +356,7 @@ export default function DashboardScreen() {
                   flex: 1,
                   paddingVertical: 12,
                   borderBottomWidth: activeCardTab === 'active' ? 2 : 0,
-                  borderBottomColor: '#000',
+                  borderBottomColor: appTheme.colors.primary,
                 }}
               >
                 <Text
@@ -364,6 +364,7 @@ export default function DashboardScreen() {
                   style={{
                     textAlign: 'center',
                     fontWeight: activeCardTab === 'active' ? 'bold' : '500',
+                    color: activeCardTab === 'active' ? appTheme.colors.onSurface : appTheme.colors.onSurfaceVariant,
                   }}
                 >
                   Active ({activeCards.length})
@@ -376,7 +377,7 @@ export default function DashboardScreen() {
                     flex: 1,
                     paddingVertical: 12,
                     borderBottomWidth: activeCardTab === 'closed' ? 2 : 0,
-                    borderBottomColor: '#000',
+                    borderBottomColor: appTheme.colors.primary,
                   }}
                 >
                   <Text
@@ -384,6 +385,7 @@ export default function DashboardScreen() {
                     style={{
                       textAlign: 'center',
                       fontWeight: activeCardTab === 'closed' ? 'bold' : '500',
+                      color: activeCardTab === 'closed' ? appTheme.colors.onSurface : appTheme.colors.onSurfaceVariant,
                     }}
                   >
                     Closed ({inactiveCards.length})
@@ -489,7 +491,7 @@ export default function DashboardScreen() {
         {/* Empty State */}
         {activeCards.length === 0 && inactiveCards.length === 0 && state.recentTransactions.length === 0 && (
           <View style={{ paddingHorizontal: 16, paddingTop: 24, alignItems: 'center' }}>
-            <Text variant="bodyMedium" style={{ color: '#666', marginBottom: 16 }}>
+            <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 16 }}>
               No cards or transactions yet
             </Text>
           </View>

@@ -239,7 +239,6 @@ export default function CardDetailScreen() {
               icon={() => <MaterialCommunityIcons name="pencil" size={20} color={appTheme.colors.onPrimary} />}
               onPress={() => (navigation as any).navigate('AddCard', { cardId })}
             />
-            <IconButton icon={() => <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.onPrimary} />} onPress={() => (navigation as any).navigate('AddTransaction', { cardId })} />
             <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
           </View>
         </View>
@@ -323,6 +322,8 @@ export default function CardDetailScreen() {
                 baseCashbackUsed={transactionCategoryTotals[category.id]?.base_cashback || 0}
                 acceleratedCashbackUsed={transactionCategoryTotals[category.id]?.accelerated_cashback || 0}
                 otherCashbackUsed={transactionCategoryTotals[category.id]?.other_cashback || 0}
+                cardCapPeriodType={cardDetails?.cap_period_type}
+                cardStatementDay={cardDetails?.statement_day}
                 onPress={() => {
                   (navigation as any).navigate('AddCategory', { categoryId: category.id });
                 }}
@@ -336,13 +337,17 @@ export default function CardDetailScreen() {
 
       {/* Transactions List */}
       <View style={{ paddingHorizontal: 16, paddingTop: 24, marginBottom: 16 }}>
-        <Text
-          variant="titleMedium"
-          style={{ fontWeight: '600', marginBottom: 12 }}
-        >
-          Transactions ({filteredTransactions.length})
-        </Text>
-
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View>
+            <Text
+              variant="titleMedium"
+              style={{ fontWeight: '600', marginBottom: 12 }}
+            >
+              Transactions ({filteredTransactions.length})
+            </Text>
+          </View>
+          <IconButton icon={() => <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.onPrimary} />} onPress={() => (navigation as any).navigate('AddTransaction', { cardId })} />
+        </View>
         {filteredTransactions.length > 0 ? (
           <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 12, overflow: 'hidden' }}>
             {filteredTransactions.map((txn) => (
@@ -361,7 +366,7 @@ export default function CardDetailScreen() {
             ))}
           </View>
         ) : (
-          <Text variant="bodyMedium" style={{ color: '#666', textAlign: 'center', marginVertical: 24 }}>
+          <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, textAlign: 'center', marginVertical: 24 }}>
             No transactions yet
           </Text>
         )}

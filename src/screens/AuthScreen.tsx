@@ -296,7 +296,7 @@ export default function AuthScreen() {
 
         <Text
           variant="bodySmall"
-          style={{ textAlign: 'center', color: '#999', marginTop: 16 }}
+          style={{ textAlign: 'center', color: appTheme.colors.onSurfaceVariant, marginTop: 16 }}
         >
           By continuing, you agree to track your rewards responsibly and securely.
         </Text>

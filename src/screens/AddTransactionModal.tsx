@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrollView, View, Alert } from 'react-native';
-import { Text, TextInput, Button, Menu, ActivityIndicator, Checkbox } from 'react-native-paper';
+import { Text, TextInput, Button, Menu, ActivityIndicator, Checkbox, Card } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
-import { calculateValuebackAmounts } from '../lib/cashbackCore';
+import { calculateValuebackAmounts, calculateValuebackWithCaps, getCapPeriodDates } from '../lib/cashbackCore';
 import { addTransaction, updateTransaction } from '../lib/transactionWriteService';
+
+const formatCapPeriodText = (card: any): string => {
+  if (!card) return 'this period';
+  if (card.cap_period_type === 'statement_month' && card.statement_day) {
+    return `this statement period (${card.statement_day}th of each month)`;
+  }
+  return 'this month';
+};
 
 export default function AddTransactionModal() {
   const insets = useSafeAreaInsets();
@@ -32,15 +41,90 @@ export default function AddTransactionModal() {
   const [customOtherPct, setCustomOtherPct] = useState('');
   const [cappedValueback, setCappedValueback] = useState<any | null>(null);
   const [isCapApplied, setIsCapApplied] = useState(false);
+  const [existingCashback, setExistingCashback] = useState({ base: 0, accelerated: 0, other: 0 });
+  const [currentTransactionCashback, setCurrentTransactionCashback] = useState({ base: 0, accelerated: 0, other: 0 });
+  const [periodTransactions, setPeriodTransactions] = useState<any[]>([]);
   const [notes, setNotes] = useState('');
+  const [draftStorageKey, setDraftStorageKey] = useState<string | null>(null);
+  const routeParams = route.params as any;
+  const routeCardId = routeParams?.cardId || null;
+  const routeCategoryId = routeParams?.categoryId || null;
+  const cardContextLocked = !isEditMode && Boolean(routeCardId);
+  const categoryContextLocked = !isEditMode && Boolean(routeCategoryId);
+
+  const resetTransactionForm = () => {
+    setAmount('');
+    setActualAmount('');
+    setSameAsTransactionAmount(true);
+    setSelectedCard(null);
+    setSelectedCategory(null);
+    setCardMenuVisible(false);
+    setCategoryMenuVisible(false);
+    setIsEditMode(false);
+    setTransactionId(null);
+    setInitialLoadComplete(false);
+    setUseCustomCashback(false);
+    setCustomBasePct('');
+    setCustomAcceleratedPct('');
+    setCustomOtherPct('');
+    setCappedValueback(null);
+    setIsCapApplied(false);
+    setExistingCashback({ base: 0, accelerated: 0, other: 0 });
+    setCurrentTransactionCashback({ base: 0, accelerated: 0, other: 0 });
+    setPeriodTransactions([]);
+    setNotes('');
+    setDraftStorageKey(null);
+  };
+
+  useEffect(() => {
+    if (isEditMode || !draftStorageKey) {
+      return;
+    }
+
+    const draft = {
+      cardId: selectedCard,
+      categoryId: selectedCategory,
+      amount,
+      sameAsTransactionAmount,
+      actualAmount,
+      notes,
+      useCustomCashback,
+      customBasePct,
+      customAcceleratedPct,
+      customOtherPct,
+    };
+
+    AsyncStorage.setItem(draftStorageKey, JSON.stringify(draft)).catch((error) => {
+      console.error('Failed to persist transaction draft:', error);
+    });
+  }, [
+    isEditMode,
+    draftStorageKey,
+    selectedCard,
+    selectedCategory,
+    amount,
+    sameAsTransactionAmount,
+    actualAmount,
+    notes,
+    useCustomCashback,
+    customBasePct,
+    customAcceleratedPct,
+    customOtherPct,
+  ]);
 
   useEffect(() => {
     const loadData = async () => {
       if (!hasSupabaseEnv) return;
 
+      resetTransactionForm();
+
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user.id;
       if (!userId) return;
+
+      const incomingCardId = routeCardId;
+      const incomingCategoryId = routeCategoryId;
+      const storageKey = `add-transaction-form-${userId}-${incomingCardId || 'all'}`;
 
       // Load cards from the owned cards table.
       const { data: cardsData } = await supabase
@@ -59,10 +143,17 @@ export default function AddTransactionModal() {
           .select('*')
           .in('card_id', cardIds);
         setAllCategories(categoriesData || []);
+
+        if (incomingCategoryId) {
+          const preselectedCategory = categoriesData?.find((category) => category.id === incomingCategoryId);
+          if (preselectedCategory) {
+            setSelectedCard(preselectedCategory.card_id);
+            setSelectedCategory(preselectedCategory.id);
+          }
+        }
       }
 
       // Check if we're in edit mode or have a preselected card
-      const routeParams = route.params as any;
       if (routeParams?.transactionId) {
         setIsEditMode(true);
         setTransactionId(routeParams.transactionId);
@@ -104,9 +195,49 @@ export default function AddTransactionModal() {
             setCustomOtherPct(txnData.override_other_cashback_pct !== null && txnData.override_other_cashback_pct !== undefined ? String(txnData.override_other_cashback_pct) : '');
           }
         }
-      } else if (routeParams?.cardId) {
-        // Pre-select card when navigating from CardDetailScreen
-        setSelectedCard(routeParams.cardId);
+      } else {
+        setDraftStorageKey(storageKey);
+
+        try {
+          const persistedRaw = await AsyncStorage.getItem(storageKey);
+          if (persistedRaw) {
+            const persistedData = JSON.parse(persistedRaw);
+
+            setSelectedCard(persistedData.cardId || incomingCardId || '');
+            setSelectedCategory(persistedData.categoryId || incomingCategoryId || '');
+            setAmount(persistedData.amount || '');
+            setSameAsTransactionAmount(
+              persistedData.sameAsTransactionAmount !== undefined ? persistedData.sameAsTransactionAmount : true
+            );
+            setActualAmount(persistedData.actualAmount || '');
+            setNotes(persistedData.notes || '');
+            setUseCustomCashback(persistedData.useCustomCashback || false);
+            setCustomBasePct(persistedData.customBasePct || '');
+            setCustomAcceleratedPct(persistedData.customAcceleratedPct || '');
+            setCustomOtherPct(persistedData.customOtherPct || '');
+            if (incomingCardId) {
+              setSelectedCard(incomingCardId);
+            }
+            if (incomingCategoryId) {
+              setSelectedCategory(incomingCategoryId);
+            }
+          } else {
+            if (incomingCardId) {
+              setSelectedCard(incomingCardId);
+            }
+            if (incomingCategoryId) {
+              setSelectedCategory(incomingCategoryId);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load transaction draft:', error);
+          if (incomingCardId) {
+            setSelectedCard(incomingCardId);
+          }
+          if (incomingCategoryId) {
+            setSelectedCategory(incomingCategoryId);
+          }
+        }
       }
 
       setInitialLoadComplete(true);
@@ -154,6 +285,111 @@ export default function AddTransactionModal() {
     const raw = calculateValuebackAmounts(parsedAmount, selectedCategoryObj, undefined, selectedCardObj ?? null, transactionOverride);
     return raw;
   }, [selectedCategoryObj, parsedAmount, useCustomCashback, customBasePct, customAcceleratedPct, customOtherPct, selectedCardObj]);
+
+  useEffect(() => {
+    const fetchCapPreview = async () => {
+      if (!hasSupabaseEnv || !selectedCard || !selectedCategoryObj || !selectedCardObj) {
+        setExistingCashback({ base: 0, accelerated: 0, other: 0 });
+        setCurrentTransactionCashback({ base: 0, accelerated: 0, other: 0 });
+        setPeriodTransactions([]);
+        setCappedValueback(null);
+        setIsCapApplied(false);
+        return;
+      }
+
+      const previewDate = new Date();
+      const { startDate, endDate } = getCapPeriodDates(previewDate, selectedCardObj);
+
+      try {
+        const { data: transactions, error } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('card_id', selectedCard)
+          .eq('category_id', selectedCategoryObj.id)
+          .gte('date', startDate)
+          .lte('date', endDate);
+
+        if (error) throw error;
+
+        const txns = Array.isArray(transactions) ? transactions : [];
+        setPeriodTransactions(txns);
+
+        const totals = txns.reduce(
+          (accumulator: { base: number; accelerated: number; other: number }, txn: any) => ({
+            base: accumulator.base + (txn.base_cashback_amount || 0),
+            accelerated: accumulator.accelerated + (txn.accelerated_cashback_amount || 0),
+            other: accumulator.other + (txn.other_cashback_amount || 0),
+          }),
+          { base: 0, accelerated: 0, other: 0 }
+        );
+
+        setExistingCashback(totals);
+
+        if (isEditMode && transactionId) {
+          const currentTxn = txns.find((txn: any) => txn.id === transactionId);
+          if (currentTxn) {
+            setCurrentTransactionCashback({
+              base: currentTxn.base_cashback_amount || 0,
+              accelerated: currentTxn.accelerated_cashback_amount || 0,
+              other: currentTxn.other_cashback_amount || 0,
+            });
+          } else {
+            setCurrentTransactionCashback({ base: 0, accelerated: 0, other: 0 });
+          }
+        } else {
+          setCurrentTransactionCashback({ base: 0, accelerated: 0, other: 0 });
+        }
+      } catch (error) {
+        console.error('Error fetching cap preview:', error);
+        setExistingCashback({ base: 0, accelerated: 0, other: 0 });
+        setCurrentTransactionCashback({ base: 0, accelerated: 0, other: 0 });
+        setPeriodTransactions([]);
+      }
+    };
+
+    fetchCapPreview();
+  }, [selectedCard, selectedCategoryObj, selectedCardObj, amount, useCustomCashback, customBasePct, customAcceleratedPct, customOtherPct, isEditMode, transactionId]);
+
+  const cappedPreview = useMemo(() => {
+    if (!selectedCategoryObj || !selectedCardObj || parsedAmount <= 0) {
+      return null;
+    }
+
+    const transactionOverride = useCustomCashback
+      ? {
+          basePct: customBasePct ? parseFloat(customBasePct) : undefined,
+          acceleratedPct: customAcceleratedPct ? parseFloat(customAcceleratedPct) : undefined,
+          otherPct: customOtherPct ? parseFloat(customOtherPct) : undefined,
+        }
+      : undefined;
+
+    const previewDate = new Date();
+    const txnsForCalculation = isEditMode && transactionId
+      ? periodTransactions.filter((txn: any) => txn.id !== transactionId)
+      : periodTransactions;
+
+    return calculateValuebackWithCaps(
+      parsedAmount,
+      selectedCategoryObj,
+      existingCashback,
+      undefined,
+      selectedCardObj,
+      transactionOverride,
+      txnsForCalculation,
+      previewDate,
+    );
+  }, [selectedCategoryObj, selectedCardObj, parsedAmount, useCustomCashback, customBasePct, customAcceleratedPct, customOtherPct, periodTransactions, existingCashback, isEditMode, transactionId]);
+
+  useEffect(() => {
+    if (!cappedPreview) {
+      setCappedValueback(null);
+      setIsCapApplied(false);
+      return;
+    }
+
+    setIsCapApplied(cappedPreview.total < rawValueback.total);
+    setCappedValueback(cappedPreview.total < rawValueback.total ? cappedPreview : null);
+  }, [cappedPreview, rawValueback.total]);
 
   const handleAddTransaction = async () => {
     const parsedActualAmount = parseFloat(actualAmount) || 0;
@@ -228,6 +464,10 @@ export default function AddTransactionModal() {
         alert('Transaction added successfully');
       }
       (navigation.getParent?.() as any)?.emit?.({ type: 'transactionChanged' });
+      if (draftStorageKey) {
+        await AsyncStorage.removeItem(draftStorageKey);
+      }
+      resetTransactionForm();
       navigation.goBack();
     } catch (error) {
       console.error('Error saving transaction:', error);
@@ -277,7 +517,11 @@ export default function AddTransactionModal() {
                 if (error) throw error;
                 alert('Transaction deleted successfully');
               }
+              if (draftStorageKey) {
+                await AsyncStorage.removeItem(draftStorageKey);
+              }
               (navigation.getParent?.() as any)?.emit?.({ type: 'transactionChanged' });
+              resetTransactionForm();
               navigation.goBack();
             } catch (error) {
               console.error('Error deleting transaction:', error);
@@ -313,32 +557,45 @@ export default function AddTransactionModal() {
           <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600', color: appTheme.colors.onSurface }}>
             Card *
           </Text>
-          <Menu
-            visible={cardMenuVisible}
-            onDismiss={() => setCardMenuVisible(false)}
-            anchor={
-              <Button
-                mode="outlined"
-                onPress={() => setCardMenuVisible(true)}
-                style={{ backgroundColor: appTheme.colors.surface }}
-                disabled={loading}
-              >
-                {selectedCardObj?.name || 'Select card'}
-              </Button>
-            }
-          >
-            {cards.map((card) => (
-              <Menu.Item
-                key={card.id}
-                onPress={() => {
-                  setSelectedCard(card.id);
-                  setSelectedCategory(null);
-                  setCardMenuVisible(false);
-                }}
-                title={card.name}
-              />
-            ))}
-          </Menu>
+          {cardContextLocked ? (
+            <Card style={{ backgroundColor: appTheme.colors.surfaceVariant }}>
+              <Card.Content style={{ paddingVertical: 12 }}>
+                <Text variant="titleSmall" style={{ fontWeight: '600' }}>
+                  {selectedCardObj?.name || 'Selected card'}
+                </Text>
+                <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
+                  This transaction will be saved to the selected card.
+                </Text>
+              </Card.Content>
+            </Card>
+          ) : (
+            <Menu
+              visible={cardMenuVisible}
+              onDismiss={() => setCardMenuVisible(false)}
+              anchor={
+                <Button
+                  mode="outlined"
+                  onPress={() => setCardMenuVisible(true)}
+                  style={{ backgroundColor: appTheme.colors.surface }}
+                  disabled={loading}
+                >
+                  {selectedCardObj?.name || 'Select card'}
+                </Button>
+              }
+            >
+              {cards.map((card) => (
+                <Menu.Item
+                  key={card.id}
+                  onPress={() => {
+                    setSelectedCard(card.id);
+                    setSelectedCategory(null);
+                    setCardMenuVisible(false);
+                  }}
+                  title={card.name}
+                />
+              ))}
+            </Menu>
+          )}
         </View>
 
         {/* Category Selection - Only show after card selected */}
@@ -347,36 +604,49 @@ export default function AddTransactionModal() {
             <Text variant="labelMedium" style={{ marginBottom: 8, fontWeight: '600', color: appTheme.colors.onSurface }}>
               Category {categoriesForCard.length === 0 ? '' : '*'}
             </Text>
-            {categoriesForCard.length > 0 ? (
-              <Menu
-                visible={categoryMenuVisible}
-                onDismiss={() => setCategoryMenuVisible(false)}
-                anchor={
-                  <Button
-                    mode="outlined"
-                    onPress={() => setCategoryMenuVisible(true)}
-                    style={{ backgroundColor: appTheme.colors.surface }}
-                    disabled={loading}
-                  >
-                    {categoriesForCard.find(c => c.id === selectedCategory)?.name || 'Select category'}
-                  </Button>
-                }
-              >
-                {categoriesForCard.map((category) => (
-                  <Menu.Item
-                    key={category.id}
-                    onPress={() => {
-                      setSelectedCategory(category.id);
-                      setCategoryMenuVisible(false);
-                    }}
-                    title={`${category.name} (${(category.base_cashback_pct || 0) + (category.accelerated_cashback_pct || 0) + (category.other_cashback_pct || 0)}%)`}
-                  />
-                ))}
-              </Menu>
+            {categoryContextLocked && selectedCategoryObj ? (
+              <Card style={{ backgroundColor: appTheme.colors.surfaceVariant }}>
+                <Card.Content style={{ paddingVertical: 12 }}>
+                  <Text variant="titleSmall" style={{ fontWeight: '600' }}>
+                    {selectedCategoryObj.name}
+                  </Text>
+                  <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
+                    Category is preselected from the current context.
+                  </Text>
+                </Card.Content>
+              </Card>
             ) : (
-              <Text variant="bodySmall" style={{ color: appTheme.colors.error }}>
-                No categories defined for this card. Add one on the card details page.
-              </Text>
+              categoriesForCard.length > 0 ? (
+                <Menu
+                  visible={categoryMenuVisible}
+                  onDismiss={() => setCategoryMenuVisible(false)}
+                  anchor={
+                    <Button
+                      mode="outlined"
+                      onPress={() => setCategoryMenuVisible(true)}
+                      style={{ backgroundColor: appTheme.colors.surface }}
+                      disabled={loading}
+                    >
+                      {categoriesForCard.find(c => c.id === selectedCategory)?.name || 'Select category'}
+                    </Button>
+                  }
+                >
+                  {categoriesForCard.map((category) => (
+                    <Menu.Item
+                      key={category.id}
+                      onPress={() => {
+                        setSelectedCategory(category.id);
+                        setCategoryMenuVisible(false);
+                      }}
+                      title={`${category.name} (${(category.base_cashback_pct || 0) + (category.accelerated_cashback_pct || 0) + (category.other_cashback_pct || 0)}%)`}
+                    />
+                  ))}
+                </Menu>
+              ) : (
+                <Text variant="bodySmall" style={{ color: appTheme.colors.error }}>
+                  No categories defined for this card. Add one on the card details page.
+                </Text>
+              )
             )}
           </View>
         )}
@@ -440,15 +710,21 @@ export default function AddTransactionModal() {
           {useCustomCashback && (
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ flex: 1 }}>
-                <Text variant="labelSmall">Base %</Text>
+                <Text variant="labelSmall" style={{ marginBottom: 8 }}>
+                  Base %
+                </Text>
                 <TextInput value={customBasePct} onChangeText={setCustomBasePct} placeholder="0.00" keyboardType="decimal-pad" mode="outlined" style={{ backgroundColor: appTheme.colors.surface }} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text variant="labelSmall">Accelerated %</Text>
+                <Text variant="labelSmall" style={{ marginBottom: 8 }}>
+                  Accelerated %
+                </Text>
                 <TextInput value={customAcceleratedPct} onChangeText={setCustomAcceleratedPct} placeholder="0.00" keyboardType="decimal-pad" mode="outlined" style={{ backgroundColor: appTheme.colors.surface }} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text variant="labelSmall">Other %</Text>
+                <Text variant="labelSmall" style={{ marginBottom: 8 }}>
+                  Other %
+                </Text>
                 <TextInput value={customOtherPct} onChangeText={setCustomOtherPct} placeholder="0.00" keyboardType="decimal-pad" mode="outlined" style={{ backgroundColor: appTheme.colors.surface }} />
               </View>
             </View>
@@ -457,8 +733,8 @@ export default function AddTransactionModal() {
           {parsedAmount > 0 && selectedCategory && (
             <View>
               {isCapApplied && cappedValueback && (
-                <View style={{ padding: 8, backgroundColor: '#FFF4E5', borderRadius: 6, marginBottom: 8 }}>
-                  <Text style={{ color: '#7A4100' }}>{`Rewards reduced due to category cap. Showing capped total ₹${cappedValueback.total.toFixed(2)}`}</Text>
+                <View style={{ padding: 8, backgroundColor: appTheme.colors.warningContainer, borderRadius: 6, marginBottom: 8 }}>
+                  <Text style={{ color: appTheme.colors.onWarningContainer }}>{`Rewards reduced due to category cap. Showing capped total ₹${cappedValueback.total.toFixed(2)} ${formatCapPeriodText(selectedCard ? cards.find(c => c.id === selectedCard) : null)}`}</Text>
                 </View>
               )}
 
@@ -467,7 +743,7 @@ export default function AddTransactionModal() {
                   <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
                     Base
                   </Text>
-                  <Text variant="bodyMedium" style={{ fontWeight: '600', color: '#4CAF50' }}>
+                  <Text variant="bodyMedium" style={{ fontWeight: '600', color: appTheme.colors.success }}>
                     ₹{(cappedValueback ? cappedValueback.base : rawValueback.base).toFixed(2)}
                   </Text>
                 </View>
@@ -475,7 +751,7 @@ export default function AddTransactionModal() {
                   <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
                     Accelerated
                   </Text>
-                  <Text variant="bodyMedium" style={{ fontWeight: '600', color: '#2196F3' }}>
+                  <Text variant="bodyMedium" style={{ fontWeight: '600', color: appTheme.colors.info }}>
                     ₹{(cappedValueback ? cappedValueback.accelerated : rawValueback.accelerated).toFixed(2)}
                   </Text>
                 </View>
@@ -483,7 +759,7 @@ export default function AddTransactionModal() {
                   <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
                     Other
                   </Text>
-                  <Text variant="bodyMedium" style={{ fontWeight: '600', color: '#FF9800' }}>
+                  <Text variant="bodyMedium" style={{ fontWeight: '600', color: appTheme.colors.warning }}>
                     ₹{(cappedValueback ? cappedValueback.other : rawValueback.other).toFixed(2)}
                   </Text>
                 </View>
@@ -515,7 +791,7 @@ export default function AddTransactionModal() {
             multiline
             numberOfLines={2}
             disabled={loading}
-            style={{ backgroundColor: appTheme.colors.surface }}
+            style={{ backgroundColor: appTheme.colors.surface, paddingVertical: 8 }}
           />
           <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
             {notes.length}/200
@@ -528,7 +804,10 @@ export default function AddTransactionModal() {
             <Button
               mode="outlined"
               style={{ flex: 1 }}
-              onPress={() => navigation.goBack()}
+              onPress={() => {
+                resetTransactionForm();
+                navigation.goBack();
+              }}
               disabled={loading}
             >
               Cancel
