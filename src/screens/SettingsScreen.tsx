@@ -10,7 +10,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { user, signOut } = useAuth();
-  const { appTheme } = useTheme();
+  const { appTheme, isDarkMode, setIsDarkMode } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -96,12 +96,21 @@ export default function SettingsScreen() {
 
           <Card style={{ marginBottom: 16, backgroundColor: appTheme.colors.surface }}>
             <Card.Content>
-              {/* Dark mode is enforced app-wide */}
-              <View style={{ paddingVertical: 8 }}>
-                <Text variant="bodyMedium" style={{ fontWeight: '500' }}>
-                  Dark Mode is enabled
-                </Text>
-              </View>
+                {/* Dark mode toggle */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 }}>
+                  <View>
+                    <Text variant="bodyMedium" style={{ fontWeight: '500' }}>
+                      Dark Mode
+                    </Text>
+                    <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>
+                      Toggle app theme between light and dark
+                    </Text>
+                  </View>
+                  <Switch
+                    value={isDarkMode}
+                    onValueChange={(v) => setIsDarkMode(v)}
+                  />
+                </View>
               <Divider style={{ marginVertical: 12 }} />
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 }}>
                 <Text variant="bodyMedium" style={{ fontWeight: '500' }}>

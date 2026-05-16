@@ -1,7 +1,8 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { MD3DarkTheme } from 'react-native-paper';
-import { DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native';
+import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
+import { DefaultTheme as NavigationDefaultTheme, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ThemeContextType {
   isDarkMode: boolean;
@@ -132,12 +133,71 @@ const darkTheme = {
   },
 };
 
+const lightTheme = {
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: '#0f766e',
+    primaryContainer: '#bbf7f0',
+    onPrimary: '#ffffff',
+    secondary: '#0f172a',
+    secondaryContainer: '#e6eef7',
+    tertiary: '#7c3aed',
+    tertiaryContainer: '#efe6ff',
+    surface: '#ffffff',
+    surfaceVariant: '#f3f4f6',
+    background: '#f8fafc',
+    onSurface: '#0f172a',
+    onSurfaceVariant: '#475569',
+    onSecondary: '#ffffff',
+    outline: '#cbd5e1',
+    outlineVariant: '#e2e8f0',
+    error: '#b91c1c',
+    errorContainer: '#fee2e2',
+    onError: '#ffffff',
+    onErrorContainer: '#7f1d1d',
+    success: '#16a34a',
+    successContainer: '#dcfce7',
+    onSuccessContainer: '#14532d',
+    warning: '#b45309',
+    warningContainer: '#fff7ed',
+    onWarningContainer: '#7A4100',
+    info: '#2563eb',
+    infoContainer: '#dbeafe',
+    onInfoContainer: '#1e3a8a',
+    shadow: 'rgba(15, 23, 42, 0.08)',
+    scrim: 'rgba(0, 0, 0, 0.08)',
+    categoryFood: '#FF6B6B',
+    categoryTravel: '#4ECDC4',
+    categoryShopping: '#FFE66D',
+    categoryUtilities: '#95E1D3',
+    categoryEntertainment: '#C7CEEA',
+    categoryDefault: '#64748b',
+    cardVisaBg: '#e8eefc',
+    cardVisaAccent: '#1434CB',
+    cardMastercardBg: '#ffe9ea',
+    cardMastercardAccent: '#ff5f00',
+    cardAmexBg: '#e6f2ff',
+    cardAmexAccent: '#00a8e1',
+    cardRupayBg: '#ffecec',
+    cardRupayAccent: '#ff8c8c',
+    cardDefaultBg: '#f1f5f9',
+    cardDefaultAccent: '#94a3b8',
+    rewardMilesBg: '#f7eefb',
+    rewardCashbackBg: '#ecfdf5',
+    rewardMilesText: '#5b21b6',
+    rewardCashbackText: '#065f46',
+    rewardMilesAccent: '#7c3aed',
+    rewardCashbackAccent: '#059669',
+  },
+};
+
 const navigationDarkTheme = {
-  ...NavigationDefaultTheme,
+  ...NavigationDarkTheme,
   dark: true,
   fonts: navigationFonts,
   colors: {
-    ...NavigationDefaultTheme.colors,
+    ...NavigationDarkTheme.colors,
     primary: '#2dd4bf',
     background: '#0b1220',
     card: '#111827',
@@ -147,16 +207,64 @@ const navigationDarkTheme = {
   },
 };
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Force dark-only theme across the app to match product requirement
-  const isDarkMode = true;
-  const setIsDarkMode = (_: boolean) => {
-    // no-op: app is dark-only
-    return;
-  };
+const navigationLightTheme = {
+  ...NavigationDefaultTheme,
+  dark: false,
+  fonts: navigationFonts,
+  colors: {
+    ...NavigationDefaultTheme.colors,
+    primary: '#0f766e',
+    background: '#f8fafc',
+    card: '#ffffff',
+    text: '#0f172a',
+    border: '#e6eef7',
+    notification: '#b45309',
+  },
+};
 
-  const appTheme = darkTheme;
-  const navigationTheme = navigationDarkTheme;
+const THEME_STORAGE_KEY = 'cashtrack-theme-mode';
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isThemeReady, setIsThemeReady] = useState(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadThemePreference = async () => {
+      try {
+        const savedMode = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+        if (!isCancelled && savedMode) {
+          setIsDarkMode(savedMode === 'dark');
+        }
+      } catch (error) {
+        console.warn('Failed to load theme preference', error);
+      } finally {
+        if (!isCancelled) {
+          setIsThemeReady(true);
+        }
+      }
+    };
+
+    void loadThemePreference();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isThemeReady) {
+      return;
+    }
+
+    AsyncStorage.setItem(THEME_STORAGE_KEY, isDarkMode ? 'dark' : 'light').catch((error) => {
+      console.warn('Failed to save theme preference', error);
+    });
+  }, [isDarkMode, isThemeReady]);
+
+  const appTheme = isDarkMode ? darkTheme : lightTheme;
+  const navigationTheme = isDarkMode ? navigationDarkTheme : navigationLightTheme;
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, setIsDarkMode, appTheme, navigationTheme }}>

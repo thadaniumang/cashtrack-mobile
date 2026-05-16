@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ScrollView, View, RefreshControl } from 'react-native';
-import { Text, Card, ActivityIndicator, Chip, IconButton } from 'react-native-paper';
+import { Text, Card, ActivityIndicator, Chip, IconButton, Surface } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import CategoryRow from '../components/CategoryRow';
 import { useTheme } from '../contexts/ThemeContext';
@@ -249,20 +249,30 @@ export default function CardDetailScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       {/* Header */}
-      <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View>
-            <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-              {cardDetails?.name || 'Card Details'}
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 4 }}>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, backgroundColor: appTheme.colors.background }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <IconButton
-              icon={() => <MaterialCommunityIcons name="pencil" size={20} color={appTheme.colors.onPrimaryContainer} />}
+              icon={() => <MaterialCommunityIcons name="arrow-left" size={20} color={appTheme.colors.onBackground} />}
+              onPress={() => (navigation as any).goBack()}
+            />
+            <View>
+              <Text variant="titleLarge" style={{ fontWeight: '700' }}>
+                {cardDetails?.name || 'Card Details'}
+              </Text>
+              <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 2 }}>
+                {cardDetails?.network || cardDetails?.bank || ''}
+              </Text>
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
+            <IconButton
+              icon={() => <MaterialCommunityIcons name="pencil" size={18} color={appTheme.colors.onPrimaryContainer} />}
               style={{ backgroundColor: appTheme.colors.primaryContainer }}
               onPress={() => (navigation as any).navigate('AddCard', { cardId })}
             />
-            <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
           </View>
         </View>
       </View>
@@ -278,126 +288,105 @@ export default function CardDetailScreen() {
 
       {/* Period View Toggle */}
       {cardDetails?.statement_day && (
-        <View style={{ paddingHorizontal: 16, paddingTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, flex: 1 }}>
-            {periodLabel}
-          </Text>
-          <Chip
-            mode="outlined"
-            icon={viewMode === 'calendar' ? 'calendar-month-outline' : 'file-document-outline'}
-            onPress={toggleViewMode}
-            compact
-          >
-            {viewMode === 'calendar' ? 'Calendar Month' : 'Statement Period'}
-          </Chip>
+        <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, flex: 1 }}>
+              {periodLabel}
+            </Text>
+            <Chip
+              mode="outlined"
+              icon={viewMode === 'calendar' ? 'calendar-month-outline' : 'file-document-outline'}
+              onPress={toggleViewMode}
+              compact
+              style={{ borderColor: appTheme.colors.outline }}
+            >
+              {viewMode === 'calendar' ? 'Calendar Month' : 'Statement Period'}
+            </Chip>
+          </View>
         </View>
       )}
 
       {/* Card Stats */}
       {cardDetails && (
-        <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 12 }}>
-          <Card style={{ backgroundColor: appTheme.colors.surface }}>
-            <Card.Content style={{ paddingVertical: 16 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <View>
-                  <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                    Status
-                  </Text>
-                  <Text variant="bodyMedium" style={{ fontWeight: 'bold' }}>
-                    {cardDetails.is_closed ? 'Closed' : 'Active'}
-                  </Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                    Reward Type
-                  </Text>
-                  <Text variant="bodyMedium" style={{ fontWeight: 'bold' }}>
-                    {cardDetails.reward_type === 'miles' ? 'Miles' : 'Cashback'}
-                  </Text>
-                </View>
-              </View>
-            </Card.Content>
-          </Card>
+        <View style={{ paddingHorizontal: 16, paddingTop: 12, gap: 12 }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <Card style={{ flex: 1, backgroundColor: appTheme.colors.surface }}>
+              <Card.Content style={{ paddingVertical: 16, alignItems: 'center' }}>
+                <MaterialCommunityIcons name="cash" size={20} color={appTheme.colors.primary} />
+                <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 8 }}>Total Spends</Text>
+                <Text variant="titleMedium" style={{ fontWeight: '700', marginTop: 6 }}>₹{totalSpends.toLocaleString()}</Text>
+              </Card.Content>
+            </Card>
 
-          <Card style={{ backgroundColor: appTheme.colors.surface }}>
-            <Card.Content style={{ paddingVertical: 16 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <View>
-                  <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                    Total Spends
-                  </Text>
-                  <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-                    ₹{totalSpends.toLocaleString()}
-                  </Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                    Expected {cardDetails.reward_type === 'miles' ? 'Miles' : 'Cashback'}
-                  </Text>
-                  <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-                    {cardDetails.reward_type === 'miles' ? totalCashback.toLocaleString() : `₹${totalCashback.toLocaleString()}`}
-                  </Text>
-                </View>
-              </View>
-              <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>
-                {savingsPercentage.toFixed(2)}% {cardDetails.reward_type === 'miles' ? 'rate' : 'savings'}
-              </Text>
-            </Card.Content>
-          </Card>
+            <Card style={{ flex: 1, backgroundColor: appTheme.colors.surface }}>
+              <Card.Content style={{ paddingVertical: 16, alignItems: 'center' }}>
+                <MaterialCommunityIcons name="wallet" size={20} color={appTheme.colors.secondary} />
+                <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 8 }}>Expected {cardDetails.reward_type === 'miles' ? 'Miles' : 'Cashback'}</Text>
+                <Text variant="titleMedium" style={{ fontWeight: '700', marginTop: 6 }}>{cardDetails.reward_type === 'miles' ? totalCashback.toLocaleString() : `₹${totalCashback.toLocaleString()}`}</Text>
+              </Card.Content>
+            </Card>
+          </View>
+
+          <Surface style={{ padding: 12, borderRadius: 12, backgroundColor: appTheme.colors.surfaceVariant }}>
+            <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>{savingsPercentage.toFixed(2)}% {cardDetails.reward_type === 'miles' ? 'rate' : 'savings'}</Text>
+          </Surface>
         </View>
       )}
 
       {/* Categories */}
       <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <Text variant="titleMedium" style={{ fontWeight: '600' }}>Categories</Text>
-          <IconButton
-            icon={() => <MaterialCommunityIcons name="plus" size={18} color={appTheme.colors.onPrimaryContainer} />}
-            style={{ backgroundColor: appTheme.colors.primaryContainer }}
-            onPress={() => (navigation as any).navigate('AddCategory', { cardId })}
-          />
-        </View>
-        {cardCategories.length > 0 ? (
-          <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 12, overflow: 'hidden' }}>
-            {cardCategories.map((category) => (
-              <CategoryRow
-                key={category.id}
-                category={category}
-                baseCashbackUsed={transactionCategoryTotals[category.id]?.base_cashback || 0}
-                acceleratedCashbackUsed={transactionCategoryTotals[category.id]?.accelerated_cashback || 0}
-                otherCashbackUsed={transactionCategoryTotals[category.id]?.other_cashback || 0}
-                cardCapPeriodType={cardDetails?.cap_period_type}
-                cardStatementDay={cardDetails?.statement_day}
-                onPress={() => {
-                  (navigation as any).navigate('AddCategory', { categoryId: category.id });
-                }}
-              />
-            ))}
+        <Surface style={{ padding: 12, borderRadius: 12, backgroundColor: appTheme.colors.surface, borderColor: appTheme.colors.outline }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <View>
+              <Text variant="titleMedium" style={{ fontWeight: '600' }}>Categories</Text>
+              <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>{cardCategories.length} categories</Text>
+            </View>
+            <IconButton
+              icon={() => <MaterialCommunityIcons name="plus" size={18} color={appTheme.colors.onPrimaryContainer} />}
+              style={{ backgroundColor: appTheme.colors.primaryContainer }}
+              onPress={() => (navigation as any).navigate('AddCategory', { cardId })}
+            />
           </View>
-        ) : (
-          <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant }}>No categories defined for this card.</Text>
-        )}
+
+          {cardCategories.length > 0 ? (
+            <View>
+              {cardCategories.map((category) => (
+                <CategoryRow
+                  key={category.id}
+                  category={category}
+                  baseCashbackUsed={transactionCategoryTotals[category.id]?.base_cashback || 0}
+                  acceleratedCashbackUsed={transactionCategoryTotals[category.id]?.accelerated_cashback || 0}
+                  otherCashbackUsed={transactionCategoryTotals[category.id]?.other_cashback || 0}
+                  cardCapPeriodType={cardDetails?.cap_period_type}
+                  cardStatementDay={cardDetails?.statement_day}
+                  onPress={() => {
+                    (navigation as any).navigate('AddCategory', { categoryId: category.id });
+                  }}
+                />
+              ))}
+            </View>
+          ) : (
+            <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 12 }}>No categories defined for this card.</Text>
+          )}
+        </Surface>
       </View>
 
       {/* Transactions List */}
-      <View style={{ paddingHorizontal: 16, paddingTop: 24, marginBottom: 16 }}>
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View>
-            <Text
-              variant="titleMedium"
-              style={{ fontWeight: '600', marginBottom: 12 }}
-            >
-              Transactions ({filteredTransactions.length})
-            </Text>
+      <View style={{ paddingHorizontal: 16, paddingTop: 16, marginBottom: 24 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text variant="titleMedium" style={{ fontWeight: '600' }}>Transactions</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginRight: 8 }}>{filteredTransactions.length}</Text>
+            <IconButton
+              icon={() => <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.onPrimaryContainer} />}
+              style={{ backgroundColor: appTheme.colors.primaryContainer }}
+              onPress={() => (navigation as any).navigate('AddTransaction', { cardId })}
+            />
           </View>
-          <IconButton
-            icon={() => <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.onPrimaryContainer} />}
-            style={{ backgroundColor: appTheme.colors.primaryContainer }}
-            onPress={() => (navigation as any).navigate('AddTransaction', { cardId })}
-          />
         </View>
+
         {filteredTransactions.length > 0 ? (
-          <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 12, overflow: 'hidden' }}>
+          <View>
             {filteredTransactions.map((txn) => (
               <TransactionRow
                 key={txn.id}
@@ -414,7 +403,7 @@ export default function CardDetailScreen() {
             ))}
           </View>
         ) : (
-          <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, textAlign: 'center', marginVertical: 24 }}>
+          <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 18 }}>
             No transactions yet
           </Text>
         )}

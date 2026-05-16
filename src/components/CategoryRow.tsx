@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, ProgressBar, TouchableRipple, useTheme } from 'react-native-paper';
+import { Text, ProgressBar, TouchableRipple, useTheme, Chip, Surface } from 'react-native-paper';
 import type { CardCategory, CapConfig, CapType, CapPeriodType } from '../lib/cashbackCore';
 
 type Props = {
@@ -74,29 +74,41 @@ export default function CategoryRow({
   const acceleratedCaps = useMemo(() => resolveCaps(category, 'accelerated'), [category]);
   const otherCaps = useMemo(() => resolveCaps(category, 'other'), [category]);
 
+  const firstCap = baseCaps[0] || acceleratedCaps[0] || otherCaps[0];
+
   return (
     <TouchableRipple onPress={onPress}>
-      <View style={[styles.container, { borderBottomColor: theme.colors.outlineVariant }]}>
+      <Surface style={[styles.container, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
         <View style={styles.left}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginBottom: 4 }}>
-            <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>{category.name}</Text>
-          </View>
+          <Text variant="titleMedium" style={{ color: theme.colors.onSurface, marginBottom: 8 }}>{category.name}</Text>
+          {firstCap && (
+            <View style={{ marginBottom: 4 }}>
+              <Chip compact mode="outlined" style={{ height: 32, borderColor: theme.colors.outline, backgroundColor: theme.colors.surfaceVariant, alignSelf: 'flex-start' }}>
+                {formatCapTypeSummary(firstCap.cap_type, cardCapPeriodType)}
+              </Chip>
+            </View>
+          )}
 
           {baseCaps.map((cap, index) => {
             const progress = baseCashback / cap.cap_amount;
             const progressColor = getProgressColor(progress, theme);
             const remaining = Math.max(0, cap.cap_amount - baseCashback);
             return (
-              <View style={styles.progressWrap} key={`base-${index}`}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
-                    Base: {currency}{cap.cap_amount.toLocaleString()} ({formatCapTypeSummary(cap.cap_type, cardCapPeriodType)})
+              <View style={[styles.progressWrap, { backgroundColor: theme.colors.surfaceVariant, borderRadius: 10, padding: 12 }]} key={`base-${index}`}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Base: {currency}{cap.cap_amount.toLocaleString()}
                   </Text>
-                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
-                    {currency}{remaining.toLocaleString()} left
+                  <Text variant="labelSmall" style={{ fontWeight: '600', color: progress > 1 ? theme.colors.error : theme.colors.onSurfaceVariant }}>
+                    {currency}{baseCashback.toLocaleString()} / {currency}{cap.cap_amount.toLocaleString()}
                   </Text>
                 </View>
-                <ProgressBar progress={Math.min(progress, 1)} color={progressColor} style={styles.progress} />
+                <View style={{ backgroundColor: theme.colors.outlineVariant, borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.outline }}>
+                  <ProgressBar progress={Math.min(progress, 1)} color={progressColor} style={styles.progress} />
+                </View>
+                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 10, textAlign: 'right' }}>
+                  {currency}{remaining.toLocaleString()} left
+                </Text>
               </View>
             );
           })}
@@ -106,16 +118,21 @@ export default function CategoryRow({
             const progressColor = getProgressColor(progress, theme);
             const remaining = Math.max(0, cap.cap_amount - acceleratedCashback);
             return (
-              <View style={styles.progressWrap} key={`accelerated-${index}`}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
-                    Accelerated: {currency}{cap.cap_amount.toLocaleString()} ({formatCapTypeSummary(cap.cap_type, cardCapPeriodType)})
+              <View style={[styles.progressWrap, { backgroundColor: theme.colors.surfaceVariant, borderRadius: 10, padding: 12 }]} key={`accelerated-${index}`}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Accelerated: {currency}{cap.cap_amount.toLocaleString()}
                   </Text>
-                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
-                    {currency}{remaining.toLocaleString()} left
+                  <Text variant="labelSmall" style={{ fontWeight: '600', color: progress > 1 ? theme.colors.error : theme.colors.onSurfaceVariant }}>
+                    {currency}{acceleratedCashback.toLocaleString()} / {currency}{cap.cap_amount.toLocaleString()}
                   </Text>
                 </View>
-                <ProgressBar progress={Math.min(progress, 1)} color={progressColor} style={styles.progress} />
+                <View style={{ backgroundColor: theme.colors.outlineVariant, borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.outline }}>
+                  <ProgressBar progress={Math.min(progress, 1)} color={progressColor} style={styles.progress} />
+                </View>
+                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 10, textAlign: 'right' }}>
+                  {currency}{remaining.toLocaleString()} left
+                </Text>
               </View>
             );
           })}
@@ -125,21 +142,26 @@ export default function CategoryRow({
             const progressColor = getProgressColor(progress, theme);
             const remaining = Math.max(0, cap.cap_amount - otherCashback);
             return (
-              <View style={styles.progressWrap} key={`other-${index}`}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
-                    Other: {currency}{cap.cap_amount.toLocaleString()} ({formatCapTypeSummary(cap.cap_type, cardCapPeriodType)})
+              <View style={[styles.progressWrap, { backgroundColor: theme.colors.surfaceVariant, borderRadius: 10, padding: 12 }]} key={`other-${index}`}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Other: {currency}{cap.cap_amount.toLocaleString()}
                   </Text>
-                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
-                    {currency}{remaining.toLocaleString()} left
+                  <Text variant="labelSmall" style={{ fontWeight: '600', color: progress > 1 ? theme.colors.error : theme.colors.onSurfaceVariant }}>
+                    {currency}{otherCashback.toLocaleString()} / {currency}{cap.cap_amount.toLocaleString()}
                   </Text>
                 </View>
-                <ProgressBar progress={Math.min(progress, 1)} color={progressColor} style={styles.progress} />
+                <View style={{ backgroundColor: theme.colors.outlineVariant, borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.outline }}>
+                  <ProgressBar progress={Math.min(progress, 1)} color={progressColor} style={styles.progress} />
+                </View>
+                <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 10, textAlign: 'right' }}>
+                  {currency}{remaining.toLocaleString()} left
+                </Text>
               </View>
             );
           })}
         </View>
-      </View>
+      </Surface>
     </TouchableRipple>
   );
 }
@@ -157,12 +179,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   progressWrap: {
-    marginTop: 12,
+    marginTop: 16,
     width: '100%',
     justifyContent: 'center'
   },
   progress: {
-    height: 8,
-    borderRadius: 4,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: 'transparent',
   }
 });

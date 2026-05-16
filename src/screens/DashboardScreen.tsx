@@ -242,55 +242,59 @@ export default function DashboardScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Header */}
-        <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: appTheme.colors.background }}>
-          <View>
-            <Text variant="headlineSmall" style={{ fontWeight: 'bold', marginBottom: 6 }}>
-              Dashboard
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <IconButton
-              icon={smsSyncing ? 'progress-clock' : 'message-reply-text'}
-              onPress={async () => {
-                if (!sessionUserId) {
-                  setSnackbarText('Not signed in');
-                  setSnackbarVisible(true);
-                  return;
-                }
-                setSmsSyncing(true);
-                try {
-                  const { ingestSmsTransactions } = await import('../lib/smsIngestion');
-                  const userCards = state.cards.map((c) => ({ id: c.id, name: c.name, aliases: (c as any).aliases, last_4_digits: (c as any).last_4_digits }));
-                  const results = await ingestSmsTransactions(sessionUserId, userCards);
-                  const createdCount = results.filter((r) => r.createdTransaction && !(r.createdTransaction as any).error).length;
-                  if (createdCount > 0) {
-                    setSnackbarText(`Added ${createdCount} transactions via SMS`);
-                  } else {
-                    setSnackbarText('No new SMS transactions found');
+        <Surface style={{ marginHorizontal: 16, marginTop: 12, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, backgroundColor: appTheme.colors.surface }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View>
+              <Text variant="headlineSmall" style={{ fontWeight: '800', marginBottom: 4 }}>
+                Dashboard
+              </Text>
+              <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>Your financial overview</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <IconButton
+                icon={smsSyncing ? 'progress-clock' : 'message-reply-text'}
+                onPress={async () => {
+                  if (!sessionUserId) {
+                    setSnackbarText('Not signed in');
+                    setSnackbarVisible(true);
+                    return;
                   }
-                  setSnackbarVisible(true);
-                  // Refresh dashboard immediately
-                  hydrate();
-                } catch (err) {
-                  setSnackbarText(String(err instanceof Error ? err.message : err));
-                  setSnackbarVisible(true);
-                } finally {
-                  setSmsSyncing(false);
-                }
-              }}
-              size={20}
-              style={{ marginLeft: 4 }}
-            />
-            <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
+                  setSmsSyncing(true);
+                  try {
+                    const { ingestSmsTransactions } = await import('../lib/smsIngestion');
+                    const userCards = state.cards.map((c) => ({ id: c.id, name: c.name, aliases: (c as any).aliases, last_4_digits: (c as any).last_4_digits }));
+                    const results = await ingestSmsTransactions(sessionUserId, userCards);
+                    const createdCount = results.filter((r) => r.createdTransaction && !(r.createdTransaction as any).error).length;
+                    if (createdCount > 0) {
+                      setSnackbarText(`Added ${createdCount} transactions via SMS`);
+                    } else {
+                      setSnackbarText('No new SMS transactions found');
+                    }
+                    setSnackbarVisible(true);
+                    // Refresh dashboard immediately
+                    hydrate();
+                  } catch (err) {
+                    setSnackbarText(String(err instanceof Error ? err.message : err));
+                    setSnackbarVisible(true);
+                  } finally {
+                    setSmsSyncing(false);
+                  }
+                }}
+                size={20}
+              />
+              <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
+            </View>
           </View>
-        </View>
+        </Surface>
 
         {/* Stats Cards - Cashback */}
         {hasCashbackCards && cashbackStats.spends > 0 && (
-          <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 12 }}>
-            <Text variant="labelLarge" style={{ fontWeight: '600', color: appTheme.colors.onSurfaceVariant }}>
-              CASHBACK SUMMARY
-            </Text>
+          <View style={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: appTheme.colors.surfaceVariant }}>
+                <Text variant="labelLarge" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Cashback Rewards</Text>
+              </Surface>
+            </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <StatsCard
@@ -301,7 +305,7 @@ export default function DashboardScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <StatsCard
-                  title="Spends"
+                  title="Total Spends"
                   value={cashbackStats.spends}
                   rewardType="cashback"
                 />
@@ -312,10 +316,12 @@ export default function DashboardScreen() {
 
         {/* Stats Cards - Miles */}
         {hasMilesCards && milesStats.spends > 0 && (
-          <View style={{ paddingHorizontal: 16, paddingTop: 16, gap: 12 }}>
-            <Text variant="labelLarge" style={{ fontWeight: '600', color: appTheme.colors.onSurfaceVariant }}>
-              MILES SUMMARY
-            </Text>
+          <View style={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: appTheme.colors.surfaceVariant }}>
+                <Text variant="labelLarge" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Miles Rewards</Text>
+              </Surface>
+            </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <StatsCard
@@ -326,7 +332,7 @@ export default function DashboardScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <StatsCard
-                  title="Spends"
+                  title="Total Spends"
                   value={milesStats.spends}
                   rewardType="miles"
                 />
@@ -337,7 +343,14 @@ export default function DashboardScreen() {
 
         {/* Card Tabs */}
         {(activeCards.length > 0 || inactiveCards.length > 0) && (
-          <View style={{ paddingHorizontal: 16, paddingTop: 24 }}>
+          <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+            <View style={{ marginBottom: 12 }}>
+              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: appTheme.colors.surfaceVariant }}>
+                <Text variant="titleMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>
+                  Cards ({activeCards.length + inactiveCards.length} total)
+                </Text>
+              </Surface>
+            </View>
             <View
               style={{
                 flexDirection: 'row',
@@ -391,7 +404,7 @@ export default function DashboardScreen() {
 
             {/* Cards Display - horizontal, sorted by cashback desc */}
             {displayedCards.length > 0 && (
-              <View style={{ marginTop: 16 }}>
+              <View style={{ marginTop: 14 }}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   {displayedCards
                     .slice()
@@ -419,21 +432,27 @@ export default function DashboardScreen() {
 
         {/* Pending SMS Transactions - Review Required */}
         {state.pendingTransactions.length > 0 && (
-          <View style={{ paddingHorizontal: 16, paddingTop: 24, marginBottom: 16 }}>
-            <Text
-              variant="titleMedium"
-              style={{ fontWeight: '600', marginBottom: 12, color: appTheme.colors.error }}
-            >
-              📱 Pending SMS Review ({state.pendingTransactions.length})
-            </Text>
+          <View style={{ paddingHorizontal: 16, paddingTop: 16, marginBottom: 8 }}>
+            <View style={{ marginBottom: 8 }}>
+              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: appTheme.colors.surfaceVariant }}>
+                <Text variant="titleMedium" style={{ fontWeight: '700', color: appTheme.colors.error }}>
+                  Pending SMS Review ({state.pendingTransactions.length})
+                </Text>
+              </Surface>
+            </View>
             <View style={{ backgroundColor: appTheme.colors.errorContainer, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: appTheme.colors.error }}>
-              {state.pendingTransactions.map((txn) => (
+              {state.pendingTransactions.map((txn, index) => (
                 <Pressable
                   key={txn.id}
                   onPress={() => {
                     (navigation as any).navigate('AddTransaction', { transactionId: txn.id });
                   }}
-                  style={{ paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: appTheme.colors.error }}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 12,
+                    borderBottomWidth: index < state.pendingTransactions.length - 1 ? 1 : 0,
+                    borderBottomColor: appTheme.colors.error,
+                  }}
                 >
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <View style={{ flex: 1 }}>
@@ -449,22 +468,20 @@ export default function DashboardScreen() {
                 </Pressable>
               ))}
             </View>
-            <Text variant="labelSmall" style={{ color: appTheme.colors.error, marginTop: 8 }}>
-              Tap to review and approve SMS transactions
-            </Text>
           </View>
         )}
 
         {/* Recent Transactions */}
         {state.recentTransactions.length > 0 && (
-          <View style={{ paddingHorizontal: 16, paddingTop: 24, marginBottom: 16 }}>
-            <Text
-              variant="titleMedium"
-              style={{ fontWeight: '600', marginBottom: 12 }}
-            >
-              Recent Transactions
-            </Text>
-            <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 12, overflow: 'hidden' }}>
+          <View style={{ paddingHorizontal: 16, paddingTop: 16, marginBottom: 16 }}>
+            <View style={{ marginBottom: 10 }}>
+              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: appTheme.colors.surfaceVariant }}>
+                <Text variant="titleMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>
+                  Recent Transactions ({state.recentTransactions.length})
+                </Text>
+              </Surface>
+            </View>
+            <View style={{ gap: 6 }}>
               {state.recentTransactions.map((txn) => (
                 <TransactionRow
                   key={txn.id}
