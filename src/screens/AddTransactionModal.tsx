@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrollView, View, Alert } from 'react-native';
-import { Text, TextInput, Button, Menu, ActivityIndicator, Checkbox, Card } from 'react-native-paper';
+import { Text, TextInput, Button, Menu, ActivityIndicator, Checkbox, Card, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
@@ -538,10 +538,19 @@ export default function AddTransactionModal() {
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 24, backgroundColor: appTheme.colors.background }} style={{ backgroundColor: appTheme.colors.background }}>
       {/* Header */}
-      <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant }}>
-        <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>
-          {isEditMode ? 'Edit Transaction' : 'Add Transaction'}
-        </Text>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>
+            {isEditMode ? 'Edit Transaction' : 'Add Transaction'}
+          </Text>
+        </View>
+        <IconButton
+          icon="close"
+          size={22}
+          onPress={() => navigation.goBack()}
+          iconColor={appTheme.colors.onSurfaceVariant}
+          style={{ marginTop: -4 }}
+        />
       </View>
 
       {!initialLoadComplete ? (

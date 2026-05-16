@@ -76,10 +76,10 @@ export default function CategoryRow({
 
   return (
     <TouchableRipple onPress={onPress}>
-      <View style={styles.container}>
+      <View style={[styles.container, { borderBottomColor: theme.colors.outlineVariant }]}>
         <View style={styles.left}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginBottom: 4 }}>
-            <Text variant="titleMedium">{category.name}</Text>
+            <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>{category.name}</Text>
           </View>
 
           {baseCaps.map((cap, index) => {
@@ -89,10 +89,10 @@ export default function CategoryRow({
             return (
               <View style={styles.progressWrap} key={`base-${index}`}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text variant="bodySmall" style={styles.muted}>
+                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
                     Base: {currency}{cap.cap_amount.toLocaleString()} ({formatCapTypeSummary(cap.cap_type, cardCapPeriodType)})
                   </Text>
-                  <Text variant="bodySmall" style={styles.muted}>
+                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
                     {currency}{remaining.toLocaleString()} left
                   </Text>
                 </View>
@@ -108,10 +108,10 @@ export default function CategoryRow({
             return (
               <View style={styles.progressWrap} key={`accelerated-${index}`}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text variant="bodySmall" style={styles.muted}>
+                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
                     Accelerated: {currency}{cap.cap_amount.toLocaleString()} ({formatCapTypeSummary(cap.cap_type, cardCapPeriodType)})
                   </Text>
-                  <Text variant="bodySmall" style={styles.muted}>
+                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
                     {currency}{remaining.toLocaleString()} left
                   </Text>
                 </View>
@@ -127,10 +127,10 @@ export default function CategoryRow({
             return (
               <View style={styles.progressWrap} key={`other-${index}`}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <Text variant="bodySmall" style={styles.muted}>
+                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
                     Other: {currency}{cap.cap_amount.toLocaleString()} ({formatCapTypeSummary(cap.cap_type, cardCapPeriodType)})
                   </Text>
-                  <Text variant="bodySmall" style={styles.muted}>
+                  <Text variant="bodySmall" style={[styles.muted, { color: theme.colors.onSurfaceVariant }]}>
                     {currency}{remaining.toLocaleString()} left
                   </Text>
                 </View>
@@ -149,14 +149,12 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.06)'
   },
   left: {
     flex: 1,
   },
   muted: {
     marginTop: 4,
-    color: 'rgba(255,255,255,0.7)'
   },
   progressWrap: {
     marginTop: 12,

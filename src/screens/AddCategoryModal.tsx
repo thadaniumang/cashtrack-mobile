@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrollView, View, Alert } from 'react-native';
-import { Text, TextInput, Button, Card, ActivityIndicator, Checkbox } from 'react-native-paper';
+import { Text, TextInput, Button, Card, ActivityIndicator, Checkbox, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
@@ -458,10 +458,19 @@ export default function AddCategoryModal() {
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 24, backgroundColor: appTheme.colors.background }} style={{ backgroundColor: appTheme.colors.background }}>
-      <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant }}>
-        <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>
-          {isEditMode ? 'Edit Category' : 'Add Category'}
-        </Text>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>
+            {isEditMode ? 'Edit Category' : 'Add Category'}
+          </Text>
+        </View>
+        <IconButton
+          icon="close"
+          size={22}
+          onPress={() => navigation.goBack()}
+          iconColor={appTheme.colors.onSurfaceVariant}
+          style={{ marginTop: -4 }}
+        />
       </View>
 
       {!initialLoadComplete ? (

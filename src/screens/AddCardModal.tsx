@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
-import { ActivityIndicator, Button, Checkbox, Menu, Text, TextInput } from 'react-native-paper';
+import { ActivityIndicator, Button, Checkbox, IconButton, Menu, Text, TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
 import { CustomDropdown } from '../components/CustomDropdown';
+import { navigationRef } from '../navigation/NavigationService';
 import type { CapPeriodType, CardVariant, RoundingMethod, RewardType } from '../lib/cashbackCore';
 
 interface BankCardOption {
@@ -389,6 +390,63 @@ export default function AddCardModal() {
     }
   };
 
+  const handleDeleteCard = () => {
+    if (!cardId) return;
+
+    Alert.alert(
+      'Delete Card',
+      'This will permanently delete the card. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (!hasSupabaseEnv) {
+                throw new Error('Supabase configuration missing');
+              }
+
+              setIsSubmitting(true);
+
+              const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+              if (sessionError || !sessionData.session?.user.id) {
+                throw new Error('Not authenticated');
+              }
+
+              const userId = sessionData.session.user.id;
+              const { error } = await supabase
+                .from('cards')
+                .delete()
+                .eq('id', cardId)
+                .eq('user_id', userId);
+
+              if (error) {
+                throw error;
+              }
+
+              navigationRef.current?.emit?.({ type: 'transactionChanged' });
+              navigationRef.current?.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: 'Dashboard',
+                    params: { screen: 'DashboardHome' },
+                  },
+                ],
+              });
+            } catch (error) {
+              console.error('Error deleting card:', error);
+              Alert.alert('Error', 'Failed to delete card');
+            } finally {
+              setIsSubmitting(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   if (formLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: appTheme.colors.background }}>
@@ -402,13 +460,22 @@ export default function AddCardModal() {
       contentContainerStyle={{ paddingBottom: insets.bottom + 24, backgroundColor: appTheme.colors.background }}
       style={{ backgroundColor: appTheme.colors.background }}
     >
-      <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant }}>
-        <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>
-          {cardId ? 'Edit Card' : 'Add New Card'}
-        </Text>
-        <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
-          Configure the card details used by the cashback engine.
-        </Text>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <Text variant="headlineSmall" style={{ fontWeight: 'bold' }}>
+            {cardId ? 'Edit Card' : 'Add New Card'}
+          </Text>
+          <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 4 }}>
+            Configure the card details used by the cashback engine.
+          </Text>
+        </View>
+        <IconButton
+          icon="close"
+          size={22}
+          onPress={() => navigation.goBack()}
+          iconColor={appTheme.colors.onSurfaceVariant}
+          style={{ marginTop: -4 }}
+        />
       </View>
 
       <View style={{ paddingHorizontal: 16, paddingTop: 20, gap: 16 }}>
@@ -673,6 +740,17 @@ export default function AddCardModal() {
             {cardId ? 'Save Changes' : 'Add Card'}
           </Button>
         </View>
+        {cardId && (
+          <Button
+            mode="outlined"
+            onPress={handleDeleteCard}
+            disabled={isSubmitting}
+            textColor={appTheme.colors.error}
+            style={{ borderColor: appTheme.colors.error }}
+          >
+            Delete Card
+          </Button>
+        )}
       </View>
     </ScrollView>
   );

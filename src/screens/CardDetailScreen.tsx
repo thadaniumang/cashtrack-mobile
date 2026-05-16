@@ -236,7 +236,8 @@ export default function CardDetailScreen() {
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 4 }}>
             <IconButton
-              icon={() => <MaterialCommunityIcons name="pencil" size={20} color={appTheme.colors.onPrimary} />}
+              icon={() => <MaterialCommunityIcons name="pencil" size={20} color={appTheme.colors.onPrimaryContainer} />}
+              style={{ backgroundColor: appTheme.colors.primaryContainer }}
               onPress={() => (navigation as any).navigate('AddCard', { cardId })}
             />
             <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
@@ -311,7 +312,11 @@ export default function CardDetailScreen() {
       <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <Text variant="titleMedium" style={{ fontWeight: '600' }}>Categories</Text>
-          <IconButton icon={() => <MaterialCommunityIcons name="plus" size={18} color={appTheme.colors.onPrimary} />} onPress={() => (navigation as any).navigate('AddCategory', { cardId })} />
+          <IconButton
+            icon={() => <MaterialCommunityIcons name="plus" size={18} color={appTheme.colors.onPrimaryContainer} />}
+            style={{ backgroundColor: appTheme.colors.primaryContainer }}
+            onPress={() => (navigation as any).navigate('AddCategory', { cardId })}
+          />
         </View>
         {cardCategories.length > 0 ? (
           <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 12, overflow: 'hidden' }}>
@@ -346,7 +351,11 @@ export default function CardDetailScreen() {
               Transactions ({filteredTransactions.length})
             </Text>
           </View>
-          <IconButton icon={() => <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.onPrimary} />} onPress={() => (navigation as any).navigate('AddTransaction', { cardId })} />
+          <IconButton
+            icon={() => <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.onPrimaryContainer} />}
+            style={{ backgroundColor: appTheme.colors.primaryContainer }}
+            onPress={() => (navigation as any).navigate('AddTransaction', { cardId })}
+          />
         </View>
         {filteredTransactions.length > 0 ? (
           <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 12, overflow: 'hidden' }}>

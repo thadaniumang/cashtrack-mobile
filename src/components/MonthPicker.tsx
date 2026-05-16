@@ -70,10 +70,10 @@ export function MonthPicker({ selectedDate, onChange, style }: MonthPickerProps)
         transparent
         onRequestClose={() => setIsOpen(false)}
       >
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: appTheme.colors.scrim }}>
           <View style={{ backgroundColor: appTheme.colors.surface, paddingBottom: 24, borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
             <View style={{ alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant }}>
-              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+              <Text variant="titleMedium" style={{ fontWeight: 'bold', color: appTheme.colors.onSurface }}>
                 Select Month & Year
               </Text>
             </View>
