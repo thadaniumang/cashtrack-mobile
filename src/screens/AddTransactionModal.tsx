@@ -311,7 +311,8 @@ export default function AddTransactionModal() {
           .eq('card_id', selectedCard)
           .eq('category_id', selectedCategoryObj.id)
           .gte('date', startDate)
-          .lte('date', endDate);
+          .lte('date', endDate)
+          .not('validation_status', 'in', '(ignored,rejected)');
 
         if (error) throw error;
 

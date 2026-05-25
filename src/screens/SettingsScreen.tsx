@@ -177,6 +177,12 @@ export default function SettingsScreen() {
         <View style={{ paddingHorizontal: 16, alignItems: 'center', marginTop: 24, paddingBottom: 16 }}>
           <Text
             variant="labelSmall"
+            style={{ color: appTheme.colors.onSurfaceVariant, textAlign: 'center', marginBottom: 6 }}
+          >
+            Made with ❤️ for Saishree
+          </Text>
+          <Text
+            variant="labelSmall"
             style={{ color: appTheme.colors.onSurfaceVariant, textAlign: 'center' }}
           >
             CashTrack v1.0.0

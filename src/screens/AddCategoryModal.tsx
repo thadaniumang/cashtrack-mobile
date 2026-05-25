@@ -21,7 +21,6 @@ import { CustomDropdown } from '../components/CustomDropdown';
 
 const CAP_TYPES: { value: string; label: string }[] = [
   { value: 'monthly', label: 'Monthly' },
-  { value: 'quarterly', label: 'Quarterly' },
   { value: 'daily', label: 'Daily' },
   { value: 'per_transaction', label: 'Per Transaction' },
 ];

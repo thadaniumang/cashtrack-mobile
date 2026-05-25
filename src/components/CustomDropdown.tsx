@@ -16,7 +16,8 @@ export function CustomDropdown({ value, options, onSelect, placeholder, style, d
   const selectedLabel = options.find((opt) => opt.value === value)?.label || placeholder || String(value);
 
   return (
-    <View style={style}>
+    <View style={[{ width: '100%' }, style]}
+    >
       <Menu
         visible={isOpen}
         onDismiss={() => setIsOpen(false)}
@@ -29,13 +30,14 @@ export function CustomDropdown({ value, options, onSelect, placeholder, style, d
               }
             }}
             disabled={disabled}
-            style={{ justifyContent: 'center', borderRadius: 14, height: 56, borderWidth: 1.2 }}
-            contentStyle={{ justifyContent: 'space-between', paddingHorizontal: 12, height: 56 }}
-            labelStyle={{ fontWeight: '600' }}
+            style={{ justifyContent: 'center', borderRadius: 14, height: 56, borderWidth: 1.2, width: '100%' }}
+            contentStyle={{ justifyContent: 'space-between', paddingHorizontal: 12, height: 56, alignItems: 'center' }}
+            labelStyle={{ fontWeight: '600', flexWrap: 'wrap' }}
           >
             {selectedLabel}
           </Button>
         }
+        contentStyle={{ maxWidth: 520, paddingVertical: 4 }}
       >
         {options.map((option) => (
           <Menu.Item
@@ -45,6 +47,7 @@ export function CustomDropdown({ value, options, onSelect, placeholder, style, d
               setIsOpen(false);
             }}
             title={option.label}
+            titleStyle={{ flexWrap: 'wrap' }}
           />
         ))}
       </Menu>

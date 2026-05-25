@@ -9,7 +9,7 @@ import type { Transaction, CardCategory } from '../lib/cashbackCore';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
 import { TransactionRow } from '../components/TransactionRow';
 import { MonthPicker } from '../components/MonthPicker';
-import { formatPeriodWithMode, getCalendarMonthDates, getStatementMonthDatesForSelectedMonth } from '../lib/capPeriods';
+import { formatPeriodWithMode, getCalendarMonthDates, getStatementMonthDatesForSelectedMonth, getCapPeriodDates } from '../lib/capPeriods';
 
 export default function CardDetailScreen() {
   const route = useRoute();
@@ -89,7 +89,7 @@ export default function CardDetailScreen() {
         .from('transactions')
         .select('*')
         .eq('card_id', cardId)
-        .neq('validation_status', 'ignored')
+        .not('validation_status', 'in', '(ignored,rejected)')
         .order('date', { ascending: false })
         .limit(50);
 
@@ -171,6 +171,12 @@ export default function CardDetailScreen() {
     return getStatementMonthDatesForSelectedMonth(selectedMonth, cardDetails.statement_day || 1);
   }, [selectedMonth, cardDetails, viewMode]);
 
+  // Cap period should always follow the card's configured cap period type
+  const capPeriod = useMemo(() => {
+    if (!cardDetails) return null;
+    return getCapPeriodDates(selectedMonth, cardDetails);
+  }, [selectedMonth, cardDetails]);
+
   // Filter transactions by selected period (calendar or statement)
   const filteredTransactions = useMemo(() => {
     if (!selectedPeriod) return [];
@@ -182,12 +188,22 @@ export default function CardDetailScreen() {
     });
   }, [transactions, selectedPeriod]);
 
+  // Transactions filtered for cap calculations follow the card's cap period type
+  const capFilteredTransactions = useMemo(() => {
+    if (!capPeriod) return [];
+    const { startDate, endDate } = capPeriod;
+    return transactions.filter((transaction) => {
+      const transactionDate = (transaction.date || '').slice(0, 10);
+      return transactionDate >= startDate && transactionDate <= endDate;
+    });
+  }, [transactions, capPeriod]);
+
   const categoryById = useMemo(() => {
     return new Map(cardCategories.map((category) => [category.id, category]));
   }, [cardCategories]);
 
   const transactionCategoryTotals = useMemo(() => {
-    return filteredTransactions.reduce((accumulator, transaction) => {
+    return capFilteredTransactions.reduce((accumulator, transaction) => {
       if (!transaction.category_id) return accumulator;
       const existing = accumulator[transaction.category_id] || { 
         base_cashback: 0, 
@@ -205,15 +221,15 @@ export default function CardDetailScreen() {
       };
       return accumulator;
     }, {} as Record<string, { base_cashback: number; accelerated_cashback: number; other_cashback: number; total_earned_reward: number; spent: number }>);
-  }, [filteredTransactions]);
+  }, [capFilteredTransactions]);
 
   const totalSpends = useMemo(() => {
-    return filteredTransactions.reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
-  }, [filteredTransactions]);
+    return capFilteredTransactions.reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
+  }, [capFilteredTransactions]);
 
   const totalCashback = useMemo(() => {
-    return filteredTransactions.reduce((sum, transaction) => sum + (transaction.expected_total_valueback || 0), 0);
-  }, [filteredTransactions]);
+    return capFilteredTransactions.reduce((sum, transaction) => sum + (transaction.expected_total_valueback || 0), 0);
+  }, [capFilteredTransactions]);
 
   const savingsPercentage = totalSpends > 0 ? (totalCashback / totalSpends) * 100 : 0;
 
@@ -251,20 +267,25 @@ export default function CardDetailScreen() {
       {/* Header */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, backgroundColor: appTheme.colors.background }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <IconButton
-              icon={() => <MaterialCommunityIcons name="arrow-left" size={20} color={appTheme.colors.onBackground} />}
-              onPress={() => (navigation as any).goBack()}
-            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <IconButton
+                icon={() => <MaterialCommunityIcons name="arrow-left" size={20} color={appTheme.colors.onBackground} />}
+                onPress={() => (navigation as any).goBack()}
+              />
             <View>
-              <Text variant="titleLarge" style={{ fontWeight: '700' }}>
+              <Text
+                variant="titleLarge"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={{ fontWeight: '700', flexShrink: 1 }}
+              >
                 {cardDetails?.name || 'Card Details'}
               </Text>
               <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 2 }}>
                 {cardDetails?.network || cardDetails?.bank || ''}
               </Text>
             </View>
-          </View>
+            </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />

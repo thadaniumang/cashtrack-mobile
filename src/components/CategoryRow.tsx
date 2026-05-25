@@ -93,6 +93,18 @@ export default function CategoryRow({
             const progress = baseCashback / cap.cap_amount;
             const progressColor = getProgressColor(progress, theme);
             const remaining = Math.max(0, cap.cap_amount - baseCashback);
+
+            // Do not show progress bars for daily or per_transaction caps
+            if (cap.cap_type === 'daily' || cap.cap_type === 'per_transaction') {
+              return (
+                <View key={`base-${index}`} style={{ marginTop: 12 }}>
+                  <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Base: {currency}{cap.cap_amount.toLocaleString()} ({formatCapType(cap.cap_type, cardCapPeriodType, cardStatementDay)})
+                  </Text>
+                </View>
+              );
+            }
+
             return (
               <View style={[styles.progressWrap, { backgroundColor: theme.colors.surfaceVariant, borderRadius: 10, padding: 12 }]} key={`base-${index}`}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -117,6 +129,17 @@ export default function CategoryRow({
             const progress = acceleratedCashback / cap.cap_amount;
             const progressColor = getProgressColor(progress, theme);
             const remaining = Math.max(0, cap.cap_amount - acceleratedCashback);
+
+            if (cap.cap_type === 'daily' || cap.cap_type === 'per_transaction') {
+              return (
+                <View key={`accelerated-${index}`} style={{ marginTop: 12 }}>
+                  <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Accelerated: {currency}{cap.cap_amount.toLocaleString()} ({formatCapType(cap.cap_type, cardCapPeriodType, cardStatementDay)})
+                  </Text>
+                </View>
+              );
+            }
+
             return (
               <View style={[styles.progressWrap, { backgroundColor: theme.colors.surfaceVariant, borderRadius: 10, padding: 12 }]} key={`accelerated-${index}`}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -141,6 +164,17 @@ export default function CategoryRow({
             const progress = otherCashback / cap.cap_amount;
             const progressColor = getProgressColor(progress, theme);
             const remaining = Math.max(0, cap.cap_amount - otherCashback);
+
+            if (cap.cap_type === 'daily' || cap.cap_type === 'per_transaction') {
+              return (
+                <View key={`other-${index}`} style={{ marginTop: 12 }}>
+                  <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Other: {currency}{cap.cap_amount.toLocaleString()} ({formatCapType(cap.cap_type, cardCapPeriodType, cardStatementDay)})
+                  </Text>
+                </View>
+              );
+            }
+
             return (
               <View style={[styles.progressWrap, { backgroundColor: theme.colors.surfaceVariant, borderRadius: 10, padding: 12 }]} key={`other-${index}`}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>

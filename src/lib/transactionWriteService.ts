@@ -39,7 +39,8 @@ const getTransactionsInCapPeriod = async (userId: string, cardId: string, catego
     .eq('card_id', cardId)
     .eq('category_id', categoryId)
     .gte('date', startDate)
-    .lte('date', endDate);
+    .lte('date', endDate)
+    .not('validation_status', 'in', '(ignored,rejected)');
   if (error) throw error;
   return (data as Transaction[]) || [];
 };
@@ -182,7 +183,8 @@ export async function updateTransaction(id: string, updates: Partial<Transaction
       .eq('category_id', mergedUpdates.category_id)
       .neq('id', id)
       .gte('date', startDate)
-      .lte('date', endDate);
+      .lte('date', endDate)
+      .not('validation_status', 'in', '(ignored,rejected)');
 
     if (queryError) throw queryError;
     existingTransactions = (existingTxns as Transaction[]) || [];

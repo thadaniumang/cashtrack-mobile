@@ -75,7 +75,7 @@ export async function loadDashboardReadModel(
     .eq('user_id', userId)
     .gte('date', startDate)
     .lte('date', endDate)
-    .neq('validation_status', 'ignored');
+    .not('validation_status', 'in', '(ignored,rejected)');
 
   const recentQuery = supabase
     .from('transactions')
@@ -83,7 +83,7 @@ export async function loadDashboardReadModel(
     .eq('user_id', userId)
     .gte('date', startDate)
     .lte('date', endDate)
-    .neq('validation_status', 'ignored')
+    .not('validation_status', 'in', '(ignored,rejected)')
     .order('date', { ascending: false })
     .order('amount', { ascending: false })
     .limit(recentLimit);
@@ -134,7 +134,7 @@ export async function loadDashboardReadModel(
     .eq('user_id', userId)
     .gte('date', startDate)
     .lte('date', endDate)
-    .neq('validation_status', 'ignored');
+    .not('validation_status', 'in', '(ignored,rejected)');
 
   const { data: cardTotalsRows, error: cardTotalsError } = await cardTotalsQuery;
   if (cardTotalsError) {

@@ -190,13 +190,6 @@ function AppContent() {
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
         duration={4000}
-        action={{
-          label: 'Refresh',
-          onPress: () => {
-            emitTransactionChanged();
-            setSnackbarVisible(false);
-          },
-        }}
         style={{ marginBottom: (insets?.bottom || 0) + 80 }}
       >
         {snackbarText}
