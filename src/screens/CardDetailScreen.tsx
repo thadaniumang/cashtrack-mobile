@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ScrollView, View, RefreshControl } from 'react-native';
 import { Text, Card, ActivityIndicator, Chip, IconButton, Surface } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import CategoryRow from '../components/CategoryRow';
 import { useTheme } from '../contexts/ThemeContext';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -246,6 +247,34 @@ export default function CardDetailScreen() {
     return formatPeriodWithMode(cardDetails, selectedMonth, viewMode);
   }, [cardDetails, selectedMonth, viewMode]);
 
+  const hexToRgba = useCallback((hex: string, alpha: number) => {
+    if (!hex) return `rgba(0,0,0,${alpha})`;
+    let c = hex.replace('#', '');
+    if (c.length === 3) c = c.split('').map((ch) => ch + ch).join('');
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }, []);
+
+  const getCardGradient = useCallback(() => {
+    const variant = cardDetails?.variant?.toLowerCase();
+
+    switch (variant) {
+      case 'visa':
+        return { start: appTheme.colors.cardVisaBg, end: appTheme.colors.primary };
+      case 'mastercard':
+        return { start: appTheme.colors.cardMastercardBg, end: appTheme.colors.secondary };
+      case 'amex':
+      case 'american express':
+        return { start: appTheme.colors.cardAmexBg, end: appTheme.colors.tertiary };
+      case 'rupay':
+        return { start: appTheme.colors.cardRupayBg, end: appTheme.colors.primary };
+      default:
+        return { start: appTheme.colors.cardDefaultBg, end: appTheme.colors.surface };
+    }
+  }, [appTheme.colors, cardDetails]);
+
   const toggleViewMode = useCallback(() => {
     setViewMode((previousMode) => (previousMode === 'calendar' ? 'statement' : 'calendar'));
   }, []);
@@ -267,25 +296,12 @@ export default function CardDetailScreen() {
       {/* Header */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, backgroundColor: appTheme.colors.background }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <IconButton
-                icon={() => <MaterialCommunityIcons name="arrow-left" size={20} color={appTheme.colors.onBackground} />}
-                onPress={() => (navigation as any).goBack()}
-              />
-            <View>
-              <Text
-                variant="titleLarge"
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={{ fontWeight: '700', flexShrink: 1 }}
-              >
-                {cardDetails?.name || 'Card Details'}
-              </Text>
-              <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 2 }}>
-                {cardDetails?.network || cardDetails?.bank || ''}
-              </Text>
-            </View>
-            </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <IconButton
+              icon={() => <MaterialCommunityIcons name="arrow-left" size={20} color={appTheme.colors.onBackground} />}
+              onPress={() => (navigation as any).goBack()}
+            />
+          </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
@@ -327,30 +343,53 @@ export default function CardDetailScreen() {
         </View>
       )}
 
-      {/* Card Stats */}
+      {/* Card Preview */}
       {cardDetails && (
         <View style={{ paddingHorizontal: 16, paddingTop: 12, gap: 12 }}>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Card style={{ flex: 1, backgroundColor: appTheme.colors.surface }}>
-              <Card.Content style={{ paddingVertical: 16, alignItems: 'center' }}>
-                <MaterialCommunityIcons name="cash" size={20} color={appTheme.colors.primary} />
-                <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 8 }}>Total Spends</Text>
-                <Text variant="titleMedium" style={{ fontWeight: '700', marginTop: 6 }}>₹{totalSpends.toLocaleString()}</Text>
-              </Card.Content>
-            </Card>
+          <Card style={{ overflow: 'hidden', borderRadius: 24 }}>
+            <LinearGradient
+              colors={[hexToRgba(getCardGradient().start, 0.10), hexToRgba(getCardGradient().end, 0.18)]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ padding: 0 }}
+            >
+              <Card.Content style={{ paddingVertical: 16, paddingHorizontal: 24 }}>
+                <View style={{ marginBottom: 32 }}>
+                  <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 2 }}>
+                    {String(cardDetails.variant || 'Other').toUpperCase()}
+                  </Text>
+                  <Text variant="titleLarge" style={{ color: appTheme.colors.onSurface, fontWeight: 'bold' }}>
+                    {cardDetails.name}
+                  </Text>
+                </View>
 
-            <Card style={{ flex: 1, backgroundColor: appTheme.colors.surface }}>
-              <Card.Content style={{ paddingVertical: 16, alignItems: 'center' }}>
-                <MaterialCommunityIcons name="wallet" size={20} color={appTheme.colors.secondary} />
-                <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 8 }}>Expected {cardDetails.reward_type === 'miles' ? 'Miles' : 'Cashback'}</Text>
-                <Text variant="titleMedium" style={{ fontWeight: '700', marginTop: 6 }}>{cardDetails.reward_type === 'miles' ? totalCashback.toLocaleString() : `₹${totalCashback.toLocaleString()}`}</Text>
-              </Card.Content>
-            </Card>
-          </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 }}>
+                  <View>
+                    <Text variant="labelLarge" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
+                      Expected {cardDetails.reward_type === 'miles' ? 'Miles' : 'Cashback'}
+                    </Text>
+                    <Text variant="bodyLarge" style={{ color: appTheme.colors.onSurface, fontWeight: 'bold' }}>
+                      {cardDetails.reward_type === 'miles' ? totalCashback.toLocaleString() : `₹${totalCashback.toLocaleString()}`}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text variant="labelLarge" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
+                      Spends
+                    </Text>
+                    <Text variant="bodyLarge" style={{ color: appTheme.colors.onSurface, fontWeight: 'bold' }}>
+                      ₹{totalSpends.toLocaleString()}
+                    </Text>
+                  </View>
+                </View>
 
-          <Surface style={{ padding: 12, borderRadius: 12, backgroundColor: appTheme.colors.surfaceVariant }}>
-            <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>{savingsPercentage.toFixed(2)}% {cardDetails.reward_type === 'miles' ? 'rate' : 'savings'}</Text>
-          </Surface>
+                {totalSpends > 0 && (
+                  <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant }}>
+                    {savingsPercentage.toFixed(2)}% {cardDetails.reward_type === 'miles' ? 'rate' : 'savings'}
+                  </Text>
+                )}
+              </Card.Content>
+            </LinearGradient>
+          </Card>
         </View>
       )}
 

@@ -483,9 +483,16 @@ export default function AddCategoryModal() {
                 keyboardType="numeric"
                 value={c.cap_amount}
                 onChangeText={(v) => updateCap(tier, i, 'cap_amount', v)}
-                style={{ width: 120, backgroundColor: appTheme.colors.background, borderRadius: 14 }}
+                style={{ width: 100, backgroundColor: appTheme.colors.background, borderRadius: 14 }}
               />
-              <Button mode="text" onPress={() => removeCap(tier, i)}>Remove</Button>
+              <IconButton
+                icon="trash-can-outline"
+                size={20}
+                onPress={() => removeCap(tier, i)}
+                iconColor={appTheme.colors.error}
+                style={{ margin: 0 }}
+                accessibilityLabel="Remove cap"
+              />
             </View>
           ))
         )}
@@ -612,8 +619,15 @@ export default function AddCategoryModal() {
                         baseCaps.map((c, i) => (
                           <View key={`base-${i}`} style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
                             <CustomDropdown value={c.cap_type} options={CAP_TYPES} onSelect={(value) => updateCap('base', i, 'cap_type', value as string)} style={{ flex: 1 }} />
-                            <TextInput mode="outlined" keyboardType="numeric" value={c.cap_amount} onChangeText={(v) => updateCap('base', i, 'cap_amount', v)} style={{ width: 120, backgroundColor: appTheme.colors.background, borderRadius: 14 }} />
-                            <Button mode="text" onPress={() => removeCap('base', i)}>Remove</Button>
+                            <TextInput mode="outlined" keyboardType="numeric" value={c.cap_amount} onChangeText={(v) => updateCap('base', i, 'cap_amount', v)} style={{ width: 80, backgroundColor: appTheme.colors.background, borderRadius: 14 }} />
+                            <IconButton
+                              icon="trash-can-outline"
+                              size={20}
+                              onPress={() => removeCap('base', i)}
+                              iconColor={appTheme.colors.error}
+                              style={{ margin: 0 }}
+                              accessibilityLabel="Remove cap"
+                            />
                           </View>
                         ))
                       )}
