@@ -27,16 +27,16 @@ interface CreditCardTileProps {
 const getCardGradient = (variant?: string, theme?: any) => {
   switch (variant?.toLowerCase()) {
     case 'visa':
-      return { start: theme.colors.cardVisaBg, end: theme.colors.primary, accent: theme.colors.cardVisaAccent };
+      return { start: theme.colors.cardVisaBg, end: theme.colors.cardVisaAccent, accent: theme.colors.cardVisaAccent };
     case 'mastercard':
-      return { start: theme.colors.cardMastercardBg, end: theme.colors.secondary, accent: theme.colors.cardMastercardAccent };
+      return { start: theme.colors.cardMastercardBg, end: theme.colors.cardMastercardAccent, accent: theme.colors.cardMastercardAccent };
     case 'amex':
     case 'american express':
-      return { start: theme.colors.cardAmexBg, end: theme.colors.tertiary, accent: theme.colors.cardAmexAccent };
+      return { start: theme.colors.cardAmexBg, end: theme.colors.cardAmexAccent, accent: theme.colors.cardAmexAccent };
     case 'rupay':
-      return { start: theme.colors.cardRupayBg, end: theme.colors.primary, accent: theme.colors.cardRupayAccent };
+      return { start: theme.colors.cardRupayBg, end: theme.colors.cardRupayAccent, accent: theme.colors.cardRupayAccent };
     default:
-      return { start: theme.colors.cardDefaultBg, end: theme.colors.surface, accent: theme.colors.cardDefaultAccent };
+      return { start: theme.colors.cardDefaultBg, end: theme.colors.cardDefaultAccent, accent: theme.colors.cardDefaultAccent };
   }
 };
 
@@ -60,7 +60,7 @@ export function CreditCardTile({
     <Pressable onPress={onPress}>
       <Card style={[{ overflow: 'hidden', opacity: isActive ? 1 : 0.5 }, style]}>
         <LinearGradient
-          colors={[hexToRgba(gradient.start, 0.10), hexToRgba(gradient.end, 0.18)]}
+          colors={[hexToRgba(gradient.start, 0.14), hexToRgba(gradient.end, 0.22)]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{ padding: 0 }}

@@ -10,6 +10,7 @@ import type { Transaction, CardCategory } from '../lib/cashbackCore';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
 import { TransactionRow } from '../components/TransactionRow';
 import { MonthPicker } from '../components/MonthPicker';
+import { CreditCardTile } from '../components/CreditCardTile';
 import { formatPeriodWithMode, getCalendarMonthDates, getStatementMonthDatesForSelectedMonth, getCapPeriodDates } from '../lib/capPeriods';
 
 export default function CardDetailScreen() {
@@ -247,34 +248,6 @@ export default function CardDetailScreen() {
     return formatPeriodWithMode(cardDetails, selectedMonth, viewMode);
   }, [cardDetails, selectedMonth, viewMode]);
 
-  const hexToRgba = useCallback((hex: string, alpha: number) => {
-    if (!hex) return `rgba(0,0,0,${alpha})`;
-    let c = hex.replace('#', '');
-    if (c.length === 3) c = c.split('').map((ch) => ch + ch).join('');
-    const r = parseInt(c.substring(0, 2), 16);
-    const g = parseInt(c.substring(2, 4), 16);
-    const b = parseInt(c.substring(4, 6), 16);
-    return `rgba(${r},${g},${b},${alpha})`;
-  }, []);
-
-  const getCardGradient = useCallback(() => {
-    const variant = cardDetails?.variant?.toLowerCase();
-
-    switch (variant) {
-      case 'visa':
-        return { start: appTheme.colors.cardVisaBg, end: appTheme.colors.primary };
-      case 'mastercard':
-        return { start: appTheme.colors.cardMastercardBg, end: appTheme.colors.secondary };
-      case 'amex':
-      case 'american express':
-        return { start: appTheme.colors.cardAmexBg, end: appTheme.colors.tertiary };
-      case 'rupay':
-        return { start: appTheme.colors.cardRupayBg, end: appTheme.colors.primary };
-      default:
-        return { start: appTheme.colors.cardDefaultBg, end: appTheme.colors.surface };
-    }
-  }, [appTheme.colors, cardDetails]);
-
   const toggleViewMode = useCallback(() => {
     setViewMode((previousMode) => (previousMode === 'calendar' ? 'statement' : 'calendar'));
   }, []);
@@ -346,50 +319,14 @@ export default function CardDetailScreen() {
       {/* Card Preview */}
       {cardDetails && (
         <View style={{ paddingHorizontal: 16, paddingTop: 12, gap: 12 }}>
-          <Card style={{ overflow: 'hidden', borderRadius: 24 }}>
-            <LinearGradient
-              colors={[hexToRgba(getCardGradient().start, 0.10), hexToRgba(getCardGradient().end, 0.18)]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ padding: 0 }}
-            >
-              <Card.Content style={{ paddingVertical: 16, paddingHorizontal: 24 }}>
-                <View style={{ marginBottom: 32 }}>
-                  <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 2 }}>
-                    {String(cardDetails.variant || 'Other').toUpperCase()}
-                  </Text>
-                  <Text variant="titleLarge" style={{ color: appTheme.colors.onSurface, fontWeight: 'bold' }}>
-                    {cardDetails.name}
-                  </Text>
-                </View>
-
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 }}>
-                  <View>
-                    <Text variant="labelLarge" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                      Expected {cardDetails.reward_type === 'miles' ? 'Miles' : 'Cashback'}
-                    </Text>
-                    <Text variant="bodyLarge" style={{ color: appTheme.colors.onSurface, fontWeight: 'bold' }}>
-                      {cardDetails.reward_type === 'miles' ? totalCashback.toLocaleString() : `₹${totalCashback.toLocaleString()}`}
-                    </Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text variant="labelLarge" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 4 }}>
-                      Spends
-                    </Text>
-                    <Text variant="bodyLarge" style={{ color: appTheme.colors.onSurface, fontWeight: 'bold' }}>
-                      ₹{totalSpends.toLocaleString()}
-                    </Text>
-                  </View>
-                </View>
-
-                {totalSpends > 0 && (
-                  <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant }}>
-                    {savingsPercentage.toFixed(2)}% {cardDetails.reward_type === 'miles' ? 'rate' : 'savings'}
-                  </Text>
-                )}
-              </Card.Content>
-            </LinearGradient>
-          </Card>
+          <CreditCardTile
+            cardName={cardDetails.name}
+            cardBrand={cardDetails.variant}
+            cashback={totalCashback}
+            spends={totalSpends}
+            rewardType={cardDetails.reward_type}
+            isActive
+          />
         </View>
       )}
 

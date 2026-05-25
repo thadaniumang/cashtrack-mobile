@@ -510,16 +510,16 @@ export default function AddCategoryModal() {
       style={{ backgroundColor: appTheme.colors.background }}
     >
       <Surface style={{ margin: 16, borderRadius: 24, overflow: 'hidden', backgroundColor: appTheme.colors.surface, elevation: 2 }}>
-        <View style={{ padding: 20, backgroundColor: appTheme.colors.secondaryContainer }}>
+        <View style={{ padding: 20, backgroundColor: appTheme.colors.tertiaryContainer }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Chip compact style={{ alignSelf: 'flex-start', marginBottom: 12, backgroundColor: appTheme.colors.surface }} textStyle={{ color: appTheme.colors.secondary, fontWeight: '700' }}>
                 {isEditMode ? 'Editing category' : 'New category'}
               </Chip>
-              <Text variant="headlineSmall" style={{ fontWeight: '800', color: appTheme.colors.onSecondaryContainer }}>
+              <Text variant="headlineSmall" style={{ fontWeight: '800', color: appTheme.colors.onTertiaryContainer }}>
                 {isEditMode ? 'Edit Category' : 'Add Category'}
               </Text>
-              <Text variant="bodyMedium" style={{ color: appTheme.colors.onSecondaryContainer, opacity: 0.9, marginTop: 6, lineHeight: 20 }}>
+              <Text variant="bodyMedium" style={{ color: appTheme.colors.onTertiaryContainer, opacity: 0.9, marginTop: 6, lineHeight: 20 }}>
                 Define reward tiers, caps, and timing in a structured way.
               </Text>
             </View>
@@ -527,16 +527,16 @@ export default function AddCategoryModal() {
               icon="close"
               size={22}
               onPress={() => navigation.goBack()}
-              iconColor={appTheme.colors.onSecondaryContainer}
+              iconColor={appTheme.colors.onTertiaryContainer}
               style={{ marginTop: -8, backgroundColor: 'rgba(255,255,255,0.14)' }}
             />
           </View>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
-            <Chip compact style={{ backgroundColor: 'rgba(255,255,255,0.14)' }} textStyle={{ color: appTheme.colors.onSecondaryContainer }}>
+            <Chip compact style={{ backgroundColor: 'rgba(255,255,255,0.14)' }} textStyle={{ color: appTheme.colors.onTertiaryContainer }}>
               {rewardModeLabel}
             </Chip>
-            <Chip compact style={{ backgroundColor: 'rgba(255,255,255,0.14)' }} textStyle={{ color: appTheme.colors.onSecondaryContainer }}>
+            <Chip compact style={{ backgroundColor: 'rgba(255,255,255,0.14)' }} textStyle={{ color: appTheme.colors.onTertiaryContainer }}>
               {splitCashback ? '3-tier rewards' : '1-tier rewards'}
             </Chip>
           </View>
