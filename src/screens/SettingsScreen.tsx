@@ -111,8 +111,8 @@ export default function SettingsScreen() {
                     onValueChange={(v) => setIsDarkMode(v)}
                   />
                 </View>
-              <Divider style={{ marginVertical: 12 }} />
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 }}>
+              {/* <Divider style={{ marginVertical: 12 }} /> */}
+              {/* <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 }}>
                 <Text variant="bodyMedium" style={{ fontWeight: '500' }}>
                   Notifications
                 </Text>
@@ -120,13 +120,13 @@ export default function SettingsScreen() {
                   value={notificationsEnabled}
                   onValueChange={setNotificationsEnabled}
                 />
-              </View>
+              </View> */}
             </Card.Content>
           </Card>
         </View>
 
         {/* Data Section */}
-        <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+        {/* <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
           <Text
             variant="titleMedium"
             style={{ fontWeight: '600', marginBottom: 12, color: appTheme.colors.onSurfaceVariant }}
@@ -158,7 +158,7 @@ export default function SettingsScreen() {
               </Button>
             </Card.Content>
           </Card>
-        </View>
+        </View> */}
 
         {/* Danger Zone */}
         <View style={{ paddingHorizontal: 16, paddingTop: 24, marginBottom: 16 }}>

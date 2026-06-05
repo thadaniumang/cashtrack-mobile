@@ -16,6 +16,11 @@ import { hasNativeSmsReader } from './src/lib/androidSms';
 import { ensureReadSmsPermission } from './src/lib/smsPermissions';
 import { ingestSmsTransactions } from './src/lib/smsIngestion';
 
+const isSmsBridgeUnavailableError = (err: unknown): boolean => {
+  const message = err instanceof Error ? err.message : String(err || '');
+  return message.includes('_nativeModule') || message.includes('Native SmsReader bridge unavailable');
+};
+
 function AppContent() {
   const { user, isLoading } = useAuth();
   const { appTheme, navigationTheme } = useTheme();
@@ -78,7 +83,9 @@ function AppContent() {
 
         if (isCancelled) return;
 
+        console.log('SMS sync: invoking ingestSmsTransactions');
         const results = await ingestSmsTransactions(user.id, (data || []) as Array<{ id: string; name: string; last_4_digits?: string | null }>);
+        console.log('SMS sync: ingestSmsTransactions completed', results.length);
         const createdCount = results.filter((result) => result.createdTransaction && !('error' in result.createdTransaction)).length;
         const failedEntries = results.filter((result) => result.createdTransaction && 'error' in result.createdTransaction);
         const rejectedEntries = results.filter((result) => !result.createdTransaction);
@@ -157,6 +164,10 @@ function AppContent() {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        if (isSmsBridgeUnavailableError(error)) {
+          console.log(`SMS sync skipped: native bridge unavailable (${message})`);
+          return;
+        }
         console.warn('SMS sync failed', error);
         console.warn(`SMS sync failed: ${message}`);
       } finally {

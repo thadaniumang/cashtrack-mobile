@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, ProgressBar, TouchableRipple, useTheme, Chip, Surface } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { CardCategory, CapConfig, CapType, CapPeriodType } from '../lib/cashbackCore';
 
 type Props = {
@@ -65,7 +66,7 @@ export default function CategoryRow({
   cardCapPeriodType = 'calendar_month',
   cardStatementDay = null,
 }: Props) {
-  const theme = useTheme();
+  const theme = useTheme() as any;
   const baseCashback = baseCashbackUsed ?? 0;
   const acceleratedCashback = acceleratedCashbackUsed ?? 0;
   const otherCashback = otherCashbackUsed ?? 0;
@@ -77,13 +78,29 @@ export default function CategoryRow({
   const firstCap = baseCaps[0] || acceleratedCaps[0] || otherCaps[0];
 
   return (
-    <TouchableRipple onPress={onPress}>
+    <TouchableRipple onPress={onPress} borderless={false} style={{ borderRadius: 16 }}>
       <Surface style={[styles.container, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
         <View style={styles.left}>
-          <Text variant="titleMedium" style={{ color: theme.colors.onSurface, marginBottom: 8 }}>{category.name}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '700', marginBottom: 8, flex: 1 }}>
+              {category.name}
+            </Text>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.onSurfaceVariant} />
+          </View>
+
           {firstCap && (
-            <View style={{ marginBottom: 4 }}>
-              <Chip compact mode="outlined" style={{ height: 32, borderColor: theme.colors.outline, backgroundColor: theme.colors.surfaceVariant, alignSelf: 'flex-start' }}>
+            <View style={{ marginBottom: 6 }}>
+              <Chip
+                compact
+                mode="outlined"
+                style={{
+                  height: 32,
+                  borderColor: theme.colors.outline,
+                  backgroundColor: theme.colors.primaryContainer,
+                  alignSelf: 'flex-start',
+                }}
+                textStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+              >
                 {formatCapTypeSummary(firstCap.cap_type, cardCapPeriodType)}
               </Chip>
             </View>
@@ -115,7 +132,7 @@ export default function CategoryRow({
                     {currency}{baseCashback.toLocaleString()} / {currency}{cap.cap_amount.toLocaleString()}
                   </Text>
                 </View>
-                <View style={{ backgroundColor: theme.colors.outlineVariant, borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.outline }}>
+                <View style={{ backgroundColor: theme.colors.outlineVariant, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.outline }}>
                   <ProgressBar progress={Math.min(progress, 1)} color={progressColor} style={styles.progress} />
                 </View>
                 <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 10, textAlign: 'right' }}>
@@ -150,7 +167,7 @@ export default function CategoryRow({
                     {currency}{acceleratedCashback.toLocaleString()} / {currency}{cap.cap_amount.toLocaleString()}
                   </Text>
                 </View>
-                <View style={{ backgroundColor: theme.colors.outlineVariant, borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.outline }}>
+                <View style={{ backgroundColor: theme.colors.outlineVariant, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.outline }}>
                   <ProgressBar progress={Math.min(progress, 1)} color={progressColor} style={styles.progress} />
                 </View>
                 <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 10, textAlign: 'right' }}>
@@ -185,7 +202,7 @@ export default function CategoryRow({
                     {currency}{otherCashback.toLocaleString()} / {currency}{cap.cap_amount.toLocaleString()}
                   </Text>
                 </View>
-                <View style={{ backgroundColor: theme.colors.outlineVariant, borderRadius: 6, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.outline }}>
+                <View style={{ backgroundColor: theme.colors.outlineVariant, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.outline }}>
                   <ProgressBar progress={Math.min(progress, 1)} color={progressColor} style={styles.progress} />
                 </View>
                 <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 10, textAlign: 'right' }}>

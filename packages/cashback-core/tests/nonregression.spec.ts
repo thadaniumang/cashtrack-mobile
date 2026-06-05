@@ -78,6 +78,8 @@ function buildTxn(id: string, date: string, baseCashback: number): Transaction {
     notes: null,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
+    source_type: 'system_sms',
+    validation_status: 'validated',
   };
 }
 

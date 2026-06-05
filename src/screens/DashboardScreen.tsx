@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, View, RefreshControl, Pressable, StyleSheet } from 'react-native';
 import { FAB, Text, ActivityIndicator, IconButton, Snackbar, Surface } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { loadDashboardReadModel } from '../lib/dashboardReadService';
@@ -238,74 +239,81 @@ export default function DashboardScreen() {
     <View style={{ flex: 1, backgroundColor: appTheme.colors.background }}>
       <ScrollView
         style={{ backgroundColor: appTheme.colors.background }}
-        contentContainerStyle={{ paddingBottom: 100, backgroundColor: appTheme.colors.background }}
+        contentContainerStyle={{ paddingBottom: 112, backgroundColor: appTheme.colors.background }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Header */}
-        <Surface style={{ marginHorizontal: 16, marginTop: 12, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, backgroundColor: appTheme.colors.surface }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View>
-              <Text variant="headlineSmall" style={{ fontWeight: '800', marginBottom: 4 }}>
-                Dashboard
-              </Text>
-              <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>Your financial overview</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <IconButton
-                icon={smsSyncing ? 'progress-clock' : 'message-reply-text'}
-                onPress={async () => {
-                  if (!sessionUserId) {
-                    setSnackbarText('Not signed in');
-                    setSnackbarVisible(true);
-                    return;
-                  }
-                  setSmsSyncing(true);
-                  try {
-                    const { ingestSmsTransactions } = await import('../lib/smsIngestion');
-                    const userCards = state.cards.map((c) => ({ id: c.id, name: c.name, aliases: (c as any).aliases, last_4_digits: (c as any).last_4_digits }));
-                    const results = await ingestSmsTransactions(sessionUserId, userCards);
-                    const createdCount = results.filter((r) => r.createdTransaction && !(r.createdTransaction as any).error).length;
-                    if (createdCount > 0) {
-                      setSnackbarText(`Added ${createdCount} transactions via SMS`);
-                    } else {
-                      setSnackbarText('No new SMS transactions found');
+        <Surface style={{ marginHorizontal: 16, marginTop: 12, borderRadius: 20, overflow: 'hidden', backgroundColor: appTheme.colors.surface }}>
+          <LinearGradient
+            colors={[appTheme.colors.primaryContainer, appTheme.colors.surface]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ paddingHorizontal: 14, paddingVertical: 14 }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text variant="headlineSmall" style={{ fontWeight: '800', marginBottom: 4, color: appTheme.colors.onSurface }}>
+                  Cashtrack
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <IconButton
+                  icon={smsSyncing ? 'progress-clock' : 'message-reply-text'}
+                  containerColor={appTheme.colors.surface}
+                  iconColor={appTheme.colors.primary}
+                  onPress={async () => {
+                    if (!sessionUserId) {
+                      setSnackbarText('Not signed in');
+                      setSnackbarVisible(true);
+                      return;
                     }
-                    setSnackbarVisible(true);
-                    // Refresh dashboard immediately
-                    hydrate();
-                  } catch (err) {
-                    setSnackbarText(String(err instanceof Error ? err.message : err));
-                    setSnackbarVisible(true);
-                  } finally {
-                    setSmsSyncing(false);
-                  }
-                }}
-                size={20}
-              />
-              <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
+                    setSmsSyncing(true);
+                    try {
+                      const { ingestSmsTransactions } = await import('../lib/smsIngestion');
+                      const userCards = state.cards.map((c) => ({ id: c.id, name: c.name, aliases: (c as any).aliases, last_4_digits: (c as any).last_4_digits }));
+                      const results = await ingestSmsTransactions(sessionUserId, userCards);
+                      const createdCount = results.filter((r) => r.createdTransaction && !(r.createdTransaction as any).error).length;
+                      if (createdCount > 0) {
+                        setSnackbarText(`Added ${createdCount} transactions via SMS`);
+                      } else {
+                        setSnackbarText('No new SMS transactions found');
+                      }
+                      setSnackbarVisible(true);
+                      hydrate();
+                    } catch (err) {
+                      setSnackbarText(String(err instanceof Error ? err.message : err));
+                      setSnackbarVisible(true);
+                    } finally {
+                      setSmsSyncing(false);
+                    }
+                  }}
+                  size={20}
+                />
+                <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
+              </View>
             </View>
-          </View>
+          </LinearGradient>
         </Surface>
 
         {/* Stats Cards - Cashback */}
         {hasCashbackCards && cashbackStats.spends > 0 && (
           <View style={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: appTheme.colors.surfaceVariant }}>
+              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: appTheme.colors.primaryContainer }}>
                 <Text variant="labelLarge" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Cashback Rewards</Text>
               </Surface>
             </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <StatsCard
-                  title="Expected Cashback"
+                  title="Expected"
                   value={cashbackStats.cashback}
                   rewardType="cashback"
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <StatsCard
-                  title="Total Spends"
+                  title="Spends"
                   value={cashbackStats.spends}
                   rewardType="cashback"
                 />
@@ -318,21 +326,21 @@ export default function DashboardScreen() {
         {hasMilesCards && milesStats.spends > 0 && (
           <View style={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: appTheme.colors.surfaceVariant }}>
+              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: appTheme.colors.tertiaryContainer }}>
                 <Text variant="labelLarge" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Miles Rewards</Text>
               </Surface>
             </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <StatsCard
-                  title="Expected Miles"
+                  title="Expected"
                   value={milesStats.miles}
                   rewardType="miles"
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <StatsCard
-                  title="Total Spends"
+                  title="Spends"
                   value={milesStats.spends}
                   rewardType="miles"
                 />
@@ -354,17 +362,20 @@ export default function DashboardScreen() {
             <View
               style={{
                 flexDirection: 'row',
-                borderBottomWidth: 1,
-                borderBottomColor: appTheme.colors.surfaceVariant,
+                backgroundColor: appTheme.colors.surface,
+                borderRadius: 14,
+                padding: 4,
+                borderWidth: 1,
+                borderColor: appTheme.colors.outlineVariant,
               }}
             >
               <Pressable
                 onPress={() => setActiveCardTab('active')}
                 style={{
                   flex: 1,
-                  paddingVertical: 12,
-                  borderBottomWidth: activeCardTab === 'active' ? 2 : 0,
-                  borderBottomColor: appTheme.colors.primary,
+                  paddingVertical: 10,
+                  borderRadius: 10,
+                  backgroundColor: activeCardTab === 'active' ? appTheme.colors.primaryContainer : 'transparent',
                 }}
               >
                 <Text
@@ -372,7 +383,7 @@ export default function DashboardScreen() {
                   style={{
                     textAlign: 'center',
                     fontWeight: activeCardTab === 'active' ? 'bold' : '500',
-                    color: activeCardTab === 'active' ? appTheme.colors.onSurface : appTheme.colors.onSurfaceVariant,
+                    color: activeCardTab === 'active' ? appTheme.colors.onPrimaryContainer : appTheme.colors.onSurfaceVariant,
                   }}
                 >
                   Active ({activeCards.length})
@@ -383,9 +394,9 @@ export default function DashboardScreen() {
                   onPress={() => setActiveCardTab('closed')}
                   style={{
                     flex: 1,
-                    paddingVertical: 12,
-                    borderBottomWidth: activeCardTab === 'closed' ? 2 : 0,
-                    borderBottomColor: appTheme.colors.primary,
+                    paddingVertical: 10,
+                    borderRadius: 10,
+                    backgroundColor: activeCardTab === 'closed' ? appTheme.colors.primaryContainer : 'transparent',
                   }}
                 >
                   <Text
@@ -393,7 +404,7 @@ export default function DashboardScreen() {
                     style={{
                       textAlign: 'center',
                       fontWeight: activeCardTab === 'closed' ? 'bold' : '500',
-                      color: activeCardTab === 'closed' ? appTheme.colors.onSurface : appTheme.colors.onSurfaceVariant,
+                      color: activeCardTab === 'closed' ? appTheme.colors.onPrimaryContainer : appTheme.colors.onSurfaceVariant,
                     }}
                   >
                     Closed ({inactiveCards.length})
@@ -405,12 +416,12 @@ export default function DashboardScreen() {
             {/* Cards Display - horizontal, sorted by cashback desc */}
             {displayedCards.length > 0 && (
               <View style={{ marginTop: 14 }}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 8 }}>
                   {displayedCards
                     .slice()
                     .sort((a, b) => (state.cardTotals[b.id]?.cashback || 0) - (state.cardTotals[a.id]?.cashback || 0))
                     .map((card) => (
-                      <View key={card.id} style={{ width: 320, marginRight: 8 }}>
+                      <View key={card.id} style={{ width: 320, marginRight: 10 }}>
                         <CreditCardTile
                           cardName={card.name}
                           cardBrand={card.variant}
@@ -434,13 +445,13 @@ export default function DashboardScreen() {
         {state.pendingTransactions.length > 0 && (
           <View style={{ paddingHorizontal: 16, paddingTop: 16, marginBottom: 8 }}>
             <View style={{ marginBottom: 8 }}>
-              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: appTheme.colors.surfaceVariant }}>
+              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: appTheme.colors.errorContainer }}>
                 <Text variant="titleMedium" style={{ fontWeight: '700', color: appTheme.colors.error }}>
                   Pending SMS Review ({state.pendingTransactions.length})
                 </Text>
               </Surface>
             </View>
-            <View style={{ backgroundColor: appTheme.colors.errorContainer, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: appTheme.colors.error }}>
+            <View style={{ backgroundColor: appTheme.colors.errorContainer, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: appTheme.colors.error }}>
               {state.pendingTransactions.map((txn, index) => (
                 <Pressable
                   key={txn.id}
@@ -449,7 +460,7 @@ export default function DashboardScreen() {
                   }}
                   style={{
                     paddingHorizontal: 12,
-                    paddingVertical: 12,
+                    paddingVertical: 14,
                     borderBottomWidth: index < state.pendingTransactions.length - 1 ? 1 : 0,
                     borderBottomColor: appTheme.colors.error,
                   }}
@@ -525,9 +536,9 @@ export default function DashboardScreen() {
                 (navigation as any).navigate('AddCard', { cardId: null });
               }}
             >
-              <Surface style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, elevation: 4, backgroundColor: appTheme.colors.surface }}>
+              <Surface style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, elevation: 4, backgroundColor: appTheme.colors.primaryContainer }}>
                 <MaterialCommunityIcons name="credit-card-plus" size={20} color={appTheme.colors.primary} />
-                <Text variant="labelLarge" style={{ color: appTheme.colors.onSurface, fontWeight: '600' }}>Add Card</Text>
+                <Text variant="labelLarge" style={{ color: appTheme.colors.onPrimaryContainer, fontWeight: '700' }}>Add Card</Text>
               </Surface>
             </Pressable>
 
@@ -537,9 +548,9 @@ export default function DashboardScreen() {
                 (navigation as any).navigate('AddTransaction');
               }}
             >
-              <Surface style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, elevation: 4, backgroundColor: appTheme.colors.surface }}>
+              <Surface style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, elevation: 4, backgroundColor: appTheme.colors.primaryContainer }}>
                 <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.primary} />
-                <Text variant="labelLarge" style={{ color: appTheme.colors.onSurface, fontWeight: '600' }}>Add Transaction</Text>
+                <Text variant="labelLarge" style={{ color: appTheme.colors.onPrimaryContainer, fontWeight: '700' }}>Add Transaction</Text>
               </Surface>
             </Pressable>
           </View>
@@ -547,6 +558,8 @@ export default function DashboardScreen() {
 
         <FAB
           icon={addMenuVisible ? 'close' : 'plus'}
+          style={{ backgroundColor: appTheme.colors.primary }}
+          color={appTheme.colors.onPrimary}
           onPress={() => setAddMenuVisible((value) => !value)}
         />
       </View>

@@ -4,6 +4,7 @@ import { ScrollView, View, Alert } from 'react-native';
 import { Text, TextInput, Button, Menu, ActivityIndicator, Checkbox, Card, IconButton, Surface, Chip, Divider } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import DatePicker from 'react-native-date-picker';
 import { useTheme } from '../contexts/ThemeContext';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
 import { calculateValuebackAmounts, calculateValuebackWithCaps, getCapPeriodDates } from '../lib/cashbackCore';
@@ -16,6 +17,20 @@ const formatCapPeriodText = (card: any): string => {
     return `this statement period (${card.statement_day}th of each month)`;
   }
   return 'this month';
+};
+
+const formatDateForStorage = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const parseStoredDate = (value?: string | null): Date => {
+  if (!value) return new Date();
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day) return new Date();
+  return new Date(year, month - 1, day);
 };
 
 export default function AddTransactionModal() {
@@ -46,6 +61,8 @@ export default function AddTransactionModal() {
   const [currentTransactionCashback, setCurrentTransactionCashback] = useState({ base: 0, accelerated: 0, other: 0 });
   const [periodTransactions, setPeriodTransactions] = useState<any[]>([]);
   const [notes, setNotes] = useState('');
+  const [transactionDate, setTransactionDate] = useState(new Date());
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [draftStorageKey, setDraftStorageKey] = useState<string | null>(null);
   const routeParams = route.params as any;
   const routeCardId = routeParams?.cardId || null;
@@ -74,6 +91,8 @@ export default function AddTransactionModal() {
     setCurrentTransactionCashback({ base: 0, accelerated: 0, other: 0 });
     setPeriodTransactions([]);
     setNotes('');
+    setTransactionDate(new Date());
+    setDatePickerOpen(false);
     setDraftStorageKey(null);
   };
 
@@ -89,6 +108,7 @@ export default function AddTransactionModal() {
       sameAsTransactionAmount,
       actualAmount,
       notes,
+      transactionDate: formatDateForStorage(transactionDate),
       useCustomCashback,
       customBasePct,
       customAcceleratedPct,
@@ -107,6 +127,7 @@ export default function AddTransactionModal() {
     sameAsTransactionAmount,
     actualAmount,
     notes,
+    transactionDate,
     useCustomCashback,
     customBasePct,
     customAcceleratedPct,
@@ -178,6 +199,7 @@ export default function AddTransactionModal() {
           setSelectedCard(txnData.card_id);
           setSelectedCategory(txnData.category_id);
           setNotes(txnData.notes || '');
+          setTransactionDate(parseStoredDate(txnData.date));
 
           const actualAmountVal = txnData.actual_amount || txnData.amount;
           if (actualAmountVal === txnData.amount) {
@@ -212,6 +234,7 @@ export default function AddTransactionModal() {
             );
             setActualAmount(persistedData.actualAmount || '');
             setNotes(persistedData.notes || '');
+            setTransactionDate(parseStoredDate(persistedData.transactionDate));
             setUseCustomCashback(persistedData.useCustomCashback || false);
             setCustomBasePct(persistedData.customBasePct || '');
             setCustomAcceleratedPct(persistedData.customAcceleratedPct || '');
@@ -301,7 +324,7 @@ export default function AddTransactionModal() {
         return;
       }
 
-      const previewDate = new Date();
+      const previewDate = transactionDate;
       const { startDate, endDate } = getCapPeriodDates(previewDate, selectedCardObj);
 
       try {
@@ -353,7 +376,7 @@ export default function AddTransactionModal() {
     };
 
     fetchCapPreview();
-  }, [selectedCard, selectedCategoryObj, selectedCardObj, amount, useCustomCashback, customBasePct, customAcceleratedPct, customOtherPct, isEditMode, transactionId]);
+  }, [selectedCard, selectedCategoryObj, selectedCardObj, amount, useCustomCashback, customBasePct, customAcceleratedPct, customOtherPct, isEditMode, transactionId, transactionDate]);
 
   const cappedPreview = useMemo(() => {
     if (!selectedCategoryObj || !selectedCardObj || parsedAmount <= 0) {
@@ -368,7 +391,7 @@ export default function AddTransactionModal() {
         }
       : undefined;
 
-    const previewDate = new Date();
+    const previewDate = transactionDate;
     const txnsForCalculation = isEditMode && transactionId
       ? periodTransactions.filter((txn: any) => txn.id !== transactionId)
       : periodTransactions;
@@ -383,7 +406,7 @@ export default function AddTransactionModal() {
       txnsForCalculation,
       previewDate,
     );
-  }, [selectedCategoryObj, selectedCardObj, parsedAmount, useCustomCashback, customBasePct, customAcceleratedPct, customOtherPct, periodTransactions, existingCashback, isEditMode, transactionId]);
+  }, [selectedCategoryObj, selectedCardObj, parsedAmount, useCustomCashback, customBasePct, customAcceleratedPct, customOtherPct, periodTransactions, existingCashback, isEditMode, transactionId, transactionDate]);
 
   useEffect(() => {
     if (!cappedPreview) {
@@ -429,6 +452,7 @@ export default function AddTransactionModal() {
           category_id: selectedCategory,
           amount: parsedAmount,
           actual_amount: finalActualAmount,
+          date: formatDateForStorage(transactionDate),
           override_base_cashback_pct: overrideBase,
           override_accelerated_cashback_pct: overrideAccelerated,
           override_other_cashback_pct: overrideOther,
@@ -457,7 +481,7 @@ export default function AddTransactionModal() {
           amount: parsedAmount,
           actual_amount: finalActualAmount,
           currency: selectedCardObj?.currency || 'INR',
-          date: new Date().toISOString().split('T')[0],
+          date: formatDateForStorage(transactionDate),
           source_type: 'manual',
           validation_status: 'pending',
           valueback_pct_override: null,
@@ -622,6 +646,36 @@ export default function AddTransactionModal() {
                 <View style={{ gap: 12 }}>
                   <Text variant="labelMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Transaction Amount *</Text>
                   <TextInput mode="outlined" placeholder="0.00" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" disabled={loading} style={{ backgroundColor: appTheme.colors.background, borderRadius: 14 }} />
+                </View>
+
+                <View style={{ gap: 12 }}>
+                  <Text variant="labelMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>Transaction Date *</Text>
+                  <Button
+                    mode="outlined"
+                    icon="calendar-month"
+                    onPress={() => setDatePickerOpen(true)}
+                    style={{ backgroundColor: appTheme.colors.background, borderRadius: 14 }}
+                    contentStyle={{ height: 54, justifyContent: 'flex-start' }}
+                    disabled={loading}
+                  >
+                    {transactionDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </Button>
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+                    <Button mode="text" compact onPress={() => setTransactionDate(new Date())} disabled={loading}>
+                      Today
+                    </Button>
+                  </View>
+                  <DatePicker
+                    modal
+                    open={datePickerOpen}
+                    date={transactionDate}
+                    mode="date"
+                    onConfirm={(date) => {
+                      setDatePickerOpen(false);
+                      setTransactionDate(date);
+                    }}
+                    onCancel={() => setDatePickerOpen(false)}
+                  />
                 </View>
 
                 <View style={{ backgroundColor: appTheme.colors.background, borderRadius: 16, padding: 14, gap: 12 }}>

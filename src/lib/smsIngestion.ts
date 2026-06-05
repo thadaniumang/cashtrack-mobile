@@ -17,6 +17,7 @@ export interface CardMatchResult {
 }
 
 const KNOWN_ISSUERS = ['hdfc', 'hsbc', 'icici', 'axis', 'sbi', 'amex', 'kotak', 'indusind', 'yes', 'au'];
+const hasSupabaseEnv = Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
 // In-memory dedupe tracker for SMS ingestion within the JS runtime.
 // Keyed by a stable non-cryptographic hash of the raw message.
@@ -277,7 +278,7 @@ export async function ingestSmsTransactions(
 
   // lazy import to avoid circular deps in tests
   const { addTransaction } = await import('./transactionWriteService');
-  const { supabase } = await import('./supabase');
+  const supabase = hasSupabaseEnv ? (await import('./supabase')).supabase : null;
 
   for (const sms of smsList) {
     const parsed = parseSmsForTransaction(sms);
@@ -306,27 +307,29 @@ export async function ingestSmsTransactions(
     }
 
     // Check database for existing transaction with same SMS hash to prevent re-ingestion on app restart
-    try {
-      const { data: existingTxn, error: dbError } = await supabase
-        .from('transactions')
-        .select('id')
-        .eq('user_id', userId)
-        .filter('ingestion_metadata->>smsHash', 'eq', hash)
-        .single();
+    if (supabase) {
+      try {
+        const { data: existingTxn, error: dbError } = await supabase
+          .from('transactions')
+          .select('id')
+          .eq('user_id', userId)
+          .filter('ingestion_metadata->>smsHash', 'eq', hash)
+          .single();
 
-      if (!dbError && existingTxn) {
-        // Transaction with this SMS already exists, mark as duplicate and skip
-        const entry: { parsed: ParsedSmsCandidate; match: CardMatchResult; createdTransaction?: any } = {
-          parsed,
-          match: { cardId: null, confidence: 0, matchedName: null, reason: 'already ingested' },
-        };
-        _ingestionSeen.add(hash);
-        results.push(entry);
-        continue;
+        if (!dbError && existingTxn) {
+          // Transaction with this SMS already exists, mark as duplicate and skip
+          const entry: { parsed: ParsedSmsCandidate; match: CardMatchResult; createdTransaction?: any } = {
+            parsed,
+            match: { cardId: null, confidence: 0, matchedName: null, reason: 'already ingested' },
+          };
+          _ingestionSeen.add(hash);
+          results.push(entry);
+          continue;
+        }
+      } catch (err) {
+        // If database check fails, log but continue with ingestion (fail-open)
+        console.warn('Database dedup check failed, proceeding with ingestion:', err);
       }
-    } catch (err) {
-      // If database check fails, log but continue with ingestion (fail-open)
-      console.warn('Database dedup check failed, proceeding with ingestion:', err);
     }
     _ingestionSeen.add(hash);
     // If parser didn't extract an account hint, try a lightweight heuristic:

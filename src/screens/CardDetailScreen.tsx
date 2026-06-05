@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ScrollView, View, RefreshControl } from 'react-native';
-import { Text, Card, ActivityIndicator, Chip, IconButton, Surface } from 'react-native-paper';
+import { Text, ActivityIndicator, Chip, IconButton, Surface } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import CategoryRow from '../components/CategoryRow';
@@ -200,6 +200,17 @@ export default function CardDetailScreen() {
     });
   }, [transactions, capPeriod]);
 
+  const filteredTransactionTotals = useMemo(() => {
+    return filteredTransactions.reduce(
+      (accumulator, transaction) => {
+        accumulator.spent += transaction.amount || 0;
+        accumulator.cashback += transaction.expected_total_valueback || 0;
+        return accumulator;
+      },
+      { spent: 0, cashback: 0 }
+    );
+  }, [filteredTransactions]);
+
   const categoryById = useMemo(() => {
     return new Map(cardCategories.map((category) => [category.id, category]));
   }, [cardCategories]);
@@ -225,13 +236,9 @@ export default function CardDetailScreen() {
     }, {} as Record<string, { base_cashback: number; accelerated_cashback: number; other_cashback: number; total_earned_reward: number; spent: number }>);
   }, [capFilteredTransactions]);
 
-  const totalSpends = useMemo(() => {
-    return capFilteredTransactions.reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
-  }, [capFilteredTransactions]);
+  const totalSpends = filteredTransactionTotals.spent;
 
-  const totalCashback = useMemo(() => {
-    return capFilteredTransactions.reduce((sum, transaction) => sum + (transaction.expected_total_valueback || 0), 0);
-  }, [capFilteredTransactions]);
+  const totalCashback = filteredTransactionTotals.cashback;
 
   const savingsPercentage = totalSpends > 0 ? (totalCashback / totalSpends) * 100 : 0;
 
@@ -263,29 +270,39 @@ export default function CardDetailScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: appTheme.colors.background }}
-      contentContainerStyle={{ paddingBottom: 24, backgroundColor: appTheme.colors.background }}
+      contentContainerStyle={{ paddingBottom: 34, backgroundColor: appTheme.colors.background }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       {/* Header */}
-      <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant, backgroundColor: appTheme.colors.background }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <IconButton
-              icon={() => <MaterialCommunityIcons name="arrow-left" size={20} color={appTheme.colors.onBackground} />}
-              onPress={() => (navigation as any).goBack()}
-            />
-          </View>
+      <Surface style={{ marginHorizontal: 16, marginTop: 12, borderRadius: 20, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={[appTheme.colors.primaryContainer, appTheme.colors.surface]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ paddingHorizontal: 10, paddingVertical: 10 }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <IconButton
+                icon={() => <MaterialCommunityIcons name="arrow-left" size={20} color={appTheme.colors.onBackground} />}
+                containerColor={appTheme.colors.surface}
+                onPress={() => (navigation as any).goBack()}
+              />
+              <Text variant="titleLarge" style={{ fontWeight: '800', color: appTheme.colors.onSurface, marginLeft: 2 }} numberOfLines={1}>
+                {cardDetails?.name || 'Card Details'}
+              </Text>
+            </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
-            <IconButton
-              icon={() => <MaterialCommunityIcons name="pencil" size={18} color={appTheme.colors.onPrimaryContainer} />}
-              style={{ backgroundColor: appTheme.colors.primaryContainer }}
-              onPress={() => (navigation as any).navigate('AddCard', { cardId })}
-            />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <IconButton
+                icon={() => <MaterialCommunityIcons name="pencil" size={18} color={appTheme.colors.onPrimaryContainer} />}
+                style={{ backgroundColor: appTheme.colors.primaryContainer }}
+                onPress={() => (navigation as any).navigate('AddCard', { cardId })}
+              />
+            </View>
           </View>
-        </View>
-      </View>
+        </LinearGradient>
+      </Surface>
 
       {/* Error State */}
       {error && (
@@ -299,19 +316,27 @@ export default function CardDetailScreen() {
       {/* Period View Toggle */}
       {cardDetails?.statement_day && (
         <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, flex: 1 }}>
-              {periodLabel}
-            </Text>
-            <Chip
-              mode="outlined"
-              icon={viewMode === 'calendar' ? 'calendar-month-outline' : 'file-document-outline'}
-              onPress={toggleViewMode}
-              compact
-              style={{ borderColor: appTheme.colors.outline }}
-            >
-              {viewMode === 'calendar' ? 'Calendar Month' : 'Statement Period'}
-            </Chip>
+          <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14, borderWidth: 1, borderColor: appTheme.colors.outlineVariant, paddingHorizontal: 12, paddingVertical: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, flex: 1 }}>
+                {periodLabel}
+              </Text>
+              <Chip compact style={{ backgroundColor: appTheme.colors.secondaryContainer }} textStyle={{ color: appTheme.colors.onSurface, fontWeight: '700' }}>
+                {savingsPercentage.toFixed(2)}% return
+              </Chip>
+            </View>
+            <View style={{ flexDirection: 'row', marginTop: 10, gap: 8, justifyContent: 'space-between' }}>
+              <Chip
+                mode="outlined"
+                icon={viewMode === 'calendar' ? 'calendar-month-outline' : 'file-document-outline'}
+                onPress={toggleViewMode}
+                compact
+                style={{ borderColor: appTheme.colors.outline, justifyContent: 'center' }}
+              >
+                {viewMode === 'calendar' ? 'Calendar Month' : 'Statement Period'}
+              </Chip>
+              <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
+            </View>
           </View>
         </View>
       )}
@@ -332,10 +357,10 @@ export default function CardDetailScreen() {
 
       {/* Categories */}
       <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
-        <Surface style={{ padding: 12, borderRadius: 12, backgroundColor: appTheme.colors.surface, borderColor: appTheme.colors.outline }}>
+        <Surface style={{ padding: 12, borderRadius: 16, backgroundColor: appTheme.colors.surface, borderColor: appTheme.colors.outlineVariant, borderWidth: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <View>
-              <Text variant="titleMedium" style={{ fontWeight: '600' }}>Categories</Text>
+              <Text variant="titleMedium" style={{ fontWeight: '700' }}>Categories</Text>
               <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>{cardCategories.length} categories</Text>
             </View>
             <IconButton
@@ -370,40 +395,42 @@ export default function CardDetailScreen() {
 
       {/* Transactions List */}
       <View style={{ paddingHorizontal: 16, paddingTop: 16, marginBottom: 24 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <Text variant="titleMedium" style={{ fontWeight: '600' }}>Transactions</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginRight: 8 }}>{filteredTransactions.length}</Text>
-            <IconButton
-              icon={() => <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.onPrimaryContainer} />}
-              style={{ backgroundColor: appTheme.colors.primaryContainer }}
-              onPress={() => (navigation as any).navigate('AddTransaction', { cardId })}
-            />
-          </View>
-        </View>
-
-        {filteredTransactions.length > 0 ? (
-          <View>
-            {filteredTransactions.map((txn) => (
-              <TransactionRow
-                key={txn.id}
-                transactionId={txn.id}
-                title={getCategoryName(txn.category_id)}
-                subtitle={getCardLabel()}
-                amount={txn.amount}
-                cashback={txn.expected_total_valueback || 0}
-                date={new Date(txn.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                onPress={() => {
-                  (navigation as any).navigate('AddTransaction', { transactionId: txn.id });
-                }}
+        <Surface style={{ borderRadius: 16, backgroundColor: appTheme.colors.surface, borderWidth: 1, borderColor: appTheme.colors.outlineVariant, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Text variant="titleMedium" style={{ fontWeight: '700' }}>Transactions</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginRight: 8 }}>{filteredTransactions.length}</Text>
+              <IconButton
+                icon={() => <MaterialCommunityIcons name="plus" size={20} color={appTheme.colors.onPrimaryContainer} />}
+                style={{ backgroundColor: appTheme.colors.primaryContainer }}
+                onPress={() => (navigation as any).navigate('AddTransaction', { cardId })}
               />
-            ))}
+            </View>
           </View>
-        ) : (
-          <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 18 }}>
-            No transactions yet
-          </Text>
-        )}
+
+          {filteredTransactions.length > 0 ? (
+            <View>
+              {filteredTransactions.map((txn) => (
+                <TransactionRow
+                  key={txn.id}
+                  transactionId={txn.id}
+                  title={getCategoryName(txn.category_id)}
+                  subtitle={getCardLabel()}
+                  amount={txn.amount}
+                  cashback={txn.expected_total_valueback || 0}
+                  date={new Date(txn.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  onPress={() => {
+                    (navigation as any).navigate('AddTransaction', { transactionId: txn.id });
+                  }}
+                />
+              ))}
+            </View>
+          ) : (
+            <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 18 }}>
+              No transactions yet
+            </Text>
+          )}
+        </Surface>
       </View>
     </ScrollView>
   );

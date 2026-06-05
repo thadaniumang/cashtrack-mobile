@@ -66,9 +66,9 @@ export default function AppNavigator() {
 
   return (
     <Tab.Navigator
-      sceneContainerStyle={{ backgroundColor: appTheme.colors.background }}
       screenOptions={({ route }) => ({
         headerShown: false,
+        sceneStyle: { backgroundColor: appTheme.colors.background },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: IconName = 'home';
 

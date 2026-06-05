@@ -4,7 +4,17 @@
 
 import type { Card, CardCategory, Transaction, TransactionSourceType, TransactionValidationStatus } from './cashbackCore';
 import { calculateValuebackWithCaps, getCapPeriodDates } from './cashbackCore';
-import { supabase, hasSupabaseEnv } from './supabase';
+
+const hasSupabaseEnv = Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
+
+const getSupabase = async () => {
+  if (!hasSupabaseEnv) {
+    throw new Error('Missing SUPABASE env (EXPO_PUBLIC_SUPABASE_URL/ANON_KEY)');
+  }
+
+  const { supabase } = await import('./supabase');
+  return supabase;
+};
 
 export type NewTransactionInput = Omit<Transaction, 'id' | 'created_at' | 'updated_at' | 'base_cashback_amount' | 'accelerated_cashback_amount' | 'other_cashback_amount' | 'base_cashback_timing' | 'accelerated_cashback_timing' | 'other_cashback_timing' | 'expected_total_valueback'> & {
   source_type?: TransactionSourceType;
@@ -18,6 +28,7 @@ const ensureSupabase = () => {
 
 const getCardById = async (cardId: string): Promise<Card | null> => {
   ensureSupabase();
+  const supabase = await getSupabase();
   const { data, error } = await supabase.from('cards').select('*').eq('id', cardId).maybeSingle();
   if (error) throw error;
   return (data as Card) || null;
@@ -25,6 +36,7 @@ const getCardById = async (cardId: string): Promise<Card | null> => {
 
 const getCategoryById = async (categoryId: string): Promise<CardCategory | null> => {
   ensureSupabase();
+  const supabase = await getSupabase();
   const { data, error } = await supabase.from('card_categories').select('*').eq('id', categoryId).maybeSingle();
   if (error) throw error;
   return (data as CardCategory) || null;
@@ -32,6 +44,7 @@ const getCategoryById = async (categoryId: string): Promise<CardCategory | null>
 
 const getTransactionsInCapPeriod = async (userId: string, cardId: string, categoryId: string, startDate: string, endDate: string): Promise<Transaction[]> => {
   ensureSupabase();
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
@@ -58,6 +71,7 @@ const getExistingCashbackTotals = (transactions: Transaction[]): { base: number;
 
 const insertTransaction = async (txn: Transaction): Promise<Transaction> => {
   ensureSupabase();
+  const supabase = await getSupabase();
   const smsHash = (txn as any)?.ingestion_metadata?.smsHash;
   if (smsHash) {
     const { data: existingDuplicate, error: duplicateError } = await supabase
@@ -79,6 +93,7 @@ const insertTransaction = async (txn: Transaction): Promise<Transaction> => {
 
 const updateTransactionInDb = async (id: string, updates: Partial<Transaction>): Promise<void> => {
   ensureSupabase();
+  const supabase = await getSupabase();
   const { error } = await supabase.from('transactions').update(updates).eq('id', id);
   if (error) throw error;
 };
@@ -136,6 +151,7 @@ export async function addTransaction(transactionData: NewTransactionInput): Prom
 
 export async function updateTransaction(id: string, updates: Partial<Transaction>): Promise<void> {
   ensureSupabase();
+  const supabase = await getSupabase();
 
   const { data: currentTxn, error: fetchError } = await supabase
     .from('transactions')
@@ -230,6 +246,7 @@ export async function updateTransaction(id: string, updates: Partial<Transaction
 
 export async function listPendingSystemTransactions(userId: string, limit = 50): Promise<Transaction[]> {
   ensureSupabase();
+  const supabase = await getSupabase();
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
@@ -249,6 +266,7 @@ export async function setTransactionValidationStatus(
   validation_status: TransactionValidationStatus,
 ): Promise<void> {
   ensureSupabase();
+  const supabase = await getSupabase();
   const { error } = await supabase
     .from('transactions')
     .update({ validation_status, updated_at: new Date().toISOString() })

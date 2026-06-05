@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Modal, ViewStyle, ScrollView, Pressable } from 'react-native';
 import { Button, Text } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface MonthPickerProps {
@@ -55,6 +56,10 @@ export function MonthPicker({ selectedDate, onChange, style }: MonthPickerProps)
     <View style={style}>
       <Button
         mode="outlined"
+        icon="calendar-month-outline"
+        labelStyle={{ fontWeight: '700' }}
+        contentStyle={{ height: 42 }}
+        style={{ borderRadius: 14, borderColor: appTheme.colors.outline, backgroundColor: appTheme.colors.surface }}
         onPress={() => {
           setTempMonth(selectedDate.getMonth());
           setTempYear(selectedDate.getFullYear());
@@ -71,16 +76,23 @@ export function MonthPicker({ selectedDate, onChange, style }: MonthPickerProps)
         onRequestClose={() => setIsOpen(false)}
       >
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: appTheme.colors.scrim }}>
-          <View style={{ backgroundColor: appTheme.colors.surface, paddingBottom: 24, borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
-            <View style={{ alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant }}>
+          <View style={{ backgroundColor: appTheme.colors.surface, paddingBottom: 24, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
+            <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
+              <View style={{ width: 44, height: 4, borderRadius: 2, backgroundColor: appTheme.colors.outlineVariant }} />
+            </View>
+
+            <View style={{ alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: appTheme.colors.surfaceVariant }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <MaterialCommunityIcons name="calendar-range" size={18} color={appTheme.colors.primary} style={{ marginRight: 8 }} />
               <Text variant="titleMedium" style={{ fontWeight: 'bold', color: appTheme.colors.onSurface }}>
                 Select Month & Year
               </Text>
+              </View>
             </View>
 
             <View style={{ flexDirection: 'row', gap: 16, paddingHorizontal: 16, paddingVertical: 24 }}>
               {/* Month Picker */}
-              <View style={{ flex: 1, borderWidth: 1, borderColor: appTheme.colors.outline, borderRadius: 4, maxHeight: 200 }}>
+              <View style={{ flex: 1, borderWidth: 1, borderColor: appTheme.colors.outlineVariant, borderRadius: 12, maxHeight: 220, backgroundColor: appTheme.colors.surfaceVariant }}>
                 <ScrollView showsVerticalScrollIndicator={false}>
                   {months.map((m, i) => (
                     <Pressable
@@ -89,12 +101,16 @@ export function MonthPicker({ selectedDate, onChange, style }: MonthPickerProps)
                       style={{
                         paddingVertical: 12,
                         paddingHorizontal: 12,
+                        marginHorizontal: 6,
+                        marginVertical: 3,
+                        borderRadius: 10,
                         backgroundColor: tempMonth === i ? appTheme.colors.primaryContainer : 'transparent',
                       }}
                     >
                       <Text
                         style={{
                           color: tempMonth === i ? appTheme.colors.onPrimaryContainer : appTheme.colors.onSurface,
+                          fontWeight: tempMonth === i ? '700' : '500',
                           textAlign: 'center',
                         }}
                       >
@@ -106,7 +122,7 @@ export function MonthPicker({ selectedDate, onChange, style }: MonthPickerProps)
               </View>
 
               {/* Year Picker */}
-              <View style={{ flex: 1, borderWidth: 1, borderColor: appTheme.colors.outline, borderRadius: 4, maxHeight: 200 }}>
+              <View style={{ flex: 1, borderWidth: 1, borderColor: appTheme.colors.outlineVariant, borderRadius: 12, maxHeight: 220, backgroundColor: appTheme.colors.surfaceVariant }}>
                 <ScrollView showsVerticalScrollIndicator={false}>
                   {years.map((y) => (
                     <Pressable
@@ -115,12 +131,16 @@ export function MonthPicker({ selectedDate, onChange, style }: MonthPickerProps)
                       style={{
                         paddingVertical: 12,
                         paddingHorizontal: 12,
+                        marginHorizontal: 6,
+                        marginVertical: 3,
+                        borderRadius: 10,
                         backgroundColor: tempYear === y ? appTheme.colors.primaryContainer : 'transparent',
                       }}
                     >
                       <Text
                         style={{
                           color: tempYear === y ? appTheme.colors.onPrimaryContainer : appTheme.colors.onSurface,
+                          fontWeight: tempYear === y ? '700' : '500',
                           textAlign: 'center',
                         }}
                       >
@@ -136,14 +156,14 @@ export function MonthPicker({ selectedDate, onChange, style }: MonthPickerProps)
               <Button
                 mode="outlined"
                 onPress={() => setIsOpen(false)}
-                style={{ flex: 1 }}
+                style={{ flex: 1, borderRadius: 12 }}
               >
                 Cancel
               </Button>
               <Button
                 mode="contained"
                 onPress={handleConfirm}
-                style={{ flex: 1 }}
+                style={{ flex: 1, borderRadius: 12 }}
               >
                 Confirm
               </Button>

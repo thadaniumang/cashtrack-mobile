@@ -1,5 +1,5 @@
 // Diagnostic helper: trace SMS matching for your exact SMS
-import { parseSmsForTransaction, matchCardFromSms } from './smsIngestion';
+import { parseSmsForTransaction, matchCardFromSms } from './src/lib/smsIngestion';
 
 const testSms = "Spent Rs. 1500 on HDFC Credit Card 1385";
 

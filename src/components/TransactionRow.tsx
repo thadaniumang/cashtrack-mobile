@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ViewStyle } from 'react-native';
 import { Text, useTheme, TouchableRipple, Surface } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 interface TransactionRowProps {
   title: string;
@@ -23,32 +24,59 @@ export function TransactionRow({
   onPress,
   style,
 }: TransactionRowProps) {
-  const theme = useTheme();
-
-  const safeSubtitle = typeof subtitle === 'string' ? subtitle : (subtitle ? String(subtitle) : '');
-  const categoryKey = safeSubtitle.length > 0 ? safeSubtitle.toLowerCase() : 'default';
+  const theme = useTheme() as any;
 
   return (
-    <TouchableRipple onPress={onPress}>
-      <Surface style={[{ marginHorizontal: 8, marginVertical: 6, borderRadius: 12, padding: 12, backgroundColor: theme.colors.surface }, style] as ViewStyle}>
+    <TouchableRipple onPress={onPress} borderless={false} style={{ borderRadius: 16 }}>
+      <Surface
+        style={[
+          {
+            marginVertical: 5,
+            borderRadius: 16,
+            paddingHorizontal: 12,
+            paddingVertical: 12,
+            backgroundColor: theme.colors.surface,
+            borderWidth: 1,
+            borderColor: theme.colors.outlineVariant,
+          },
+          style,
+        ]}
+      >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-              <View style={{ flex: 1 }}>
-                <Text variant="bodyMedium" style={{ fontWeight: '500', color: theme.colors.onSurface }} numberOfLines={1}>
-                  {title}
-                </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{subtitle}</Text>
-              </View>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
+            <View
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 17,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 10,
+                backgroundColor: theme.colors.primaryContainer,
+              }}
+            >
+              <MaterialCommunityIcons name="script-text-outline" size={18} color={theme.colors.onPrimaryContainer} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text variant="titleSmall" style={{ fontWeight: '700', color: theme.colors.onSurface }} numberOfLines={1}>
+                {title}
+              </Text>
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} numberOfLines={1}>
+                {subtitle}
+              </Text>
             </View>
           </View>
 
-          <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
-            <Text variant="bodyMedium" style={{ fontWeight: '600', marginBottom: 2, color: theme.colors.onSurface }}>
+          <View style={{ alignItems: 'flex-end', marginLeft: 6 }}>
+            <Text variant="titleSmall" style={{ fontWeight: '800', marginBottom: 2, color: theme.colors.onSurface }}>
               ₹{amount.toLocaleString()}
             </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.success, fontWeight: '500' }}>+₹{cashback.toLocaleString()}</Text>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>{date}</Text>
+            <View style={{ backgroundColor: theme.colors.successContainer, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 }}>
+              <Text variant="labelSmall" style={{ color: theme.colors.onSuccessContainer, fontWeight: '700' }}>
+                +₹{cashback.toLocaleString()}
+              </Text>
+            </View>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>{date}</Text>
           </View>
         </View>
       </Surface>

@@ -6,7 +6,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
 import { useTheme } from '../contexts/ThemeContext';
 import { CustomDropdown } from '../components/CustomDropdown';
-import { navigationRef } from '../navigation/NavigationService';
+import { emitTransactionChanged, navigationRef } from '../navigation/NavigationService';
 import type { CapPeriodType, CardVariant, RoundingMethod, RewardType } from '../lib/cashbackCore';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -430,7 +430,7 @@ export default function AddCardModal() {
                 throw error;
               }
 
-              navigationRef.current?.emit?.({ type: 'transactionChanged' });
+              emitTransactionChanged();
               navigationRef.current?.reset({
                 index: 0,
                 routes: [
