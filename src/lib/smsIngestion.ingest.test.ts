@@ -5,13 +5,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('./transactionWriteService', () => ({ addTransaction: vi.fn() }));
 
 import * as smsMod from './smsIngestion';
-import { ingestSmsTransactions } from './smsIngestion';
+import { ingestSmsTransactions, resetIngestionDeduper } from './smsIngestion';
 import { addTransaction } from './transactionWriteService';
 
 describe('ingestSmsTransactions', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    resetIngestionDeduper();
   });
+
+  const formatLocalDay = (value: string) => {
+    const date = new Date(Number(value));
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
 
   it('creates pending system transaction when match is confident', async () => {
     const sms = 'Spent INR 1,234.56 on HDFC Bank card.';
@@ -36,6 +42,32 @@ describe('ingestSmsTransactions', () => {
     expect(calledWith.validation_status).toBe('pending');
     expect(calledWith.ingestion_metadata?.rawMessage).toBe(sms);
     expect(res[0].createdTransaction).toEqual(fakeTxn);
+  });
+
+  it('uses the SMS date when creating the transaction', async () => {
+    const sms = {
+      body: 'Spent INR 1,234.56 on HDFC Bank card.',
+      date: '1714358400000',
+    };
+
+    vi.spyOn(smsMod, 'matchCardFromSms').mockReturnValue({
+      cardId: 'card-1',
+      confidence: 0.95,
+      matchedName: 'HDFC Bank',
+      reason: 'test',
+    });
+
+    const fakeTxn = { id: 'tx-2', amount: 1234.56, source_type: 'system_sms', validation_status: 'pending' };
+    (addTransaction as any).mockResolvedValue(fakeTxn);
+
+    const userCards = [{ id: 'card-1', name: 'HDFC Bank' }];
+    const res = await ingestSmsTransactions('user-1', userCards, [sms as any]);
+
+    expect((addTransaction as any)).toHaveBeenCalledTimes(1);
+    const calledWith = (addTransaction as any).mock.calls[0][0];
+    const expectedDate = formatLocalDay(sms.date);
+    expect(calledWith.date).toBe(expectedDate);
+    expect(res[0].parsed.date).toBe(expectedDate);
   });
 
   it('skips messages that do not contain the Spent keyword', async () => {

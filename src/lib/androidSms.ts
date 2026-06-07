@@ -6,7 +6,7 @@
 import { NativeModules, Platform } from 'react-native';
 import { hasReadSmsPermission, requestReadSmsPermission } from './smsPermissions';
 
-type SmsEntry = { id?: string; address?: string; body: string; date?: string };
+export type SmsEntry = { id?: string; address?: string; body: string; date?: string };
 
 const getNative = () => (NativeModules as any).SmsReader;
 
@@ -32,7 +32,7 @@ export const hasNativeSmsReader = (): boolean => {
   }
 };
 
-export async function readInbox(): Promise<string[]> {
+export async function readInbox(): Promise<SmsEntry[]> {
   console.log('SMS bridge readInbox: entering');
   if (!hasNativeSmsReader()) return [];
   try {
@@ -56,7 +56,12 @@ export async function readInbox(): Promise<string[]> {
     } catch (err) {
       console.warn('Failed to stringify native SmsReader rows for debug', err);
     }
-    return (rows || []).map((r) => r.body || '');
+    return (rows || []).map((r) => ({
+      id: r.id,
+      address: r.address,
+      body: r.body || '',
+      date: r.date,
+    }));
   } catch (err) {
     if (isBridgeUnavailableError(err)) {
       console.log('SMS bridge unavailable during readInbox; returning no messages');

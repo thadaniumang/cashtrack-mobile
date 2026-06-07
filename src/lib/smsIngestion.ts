@@ -26,6 +26,13 @@ export function resetIngestionDeduper() {
   _ingestionSeen.clear();
 }
 
+export type SmsInboxEntry = {
+  body: string;
+  date?: string | null;
+  id?: string;
+  address?: string;
+};
+
 function smsHash(s: string): string {
   // djb2-like rolling hash (fast, non-cryptographic)
   let h = 5381;
@@ -44,7 +51,7 @@ function smsHash(s: string): string {
  * - This function is a safe scaffold: it returns `[]` in JS/test environments.
  * - Provide a `smsListOverride` to `ingestSmsTransactions()` for testing.
  */
-export async function readSmsInbox(): Promise<string[]> {
+export async function readSmsInbox(): Promise<SmsInboxEntry[]> {
   // Attempt to read via Android native module when available. Fall back to [].
   // dynamic import to avoid requiring react-native bindings in web/test envs
   const mod = await import('./androidSms');
@@ -69,6 +76,21 @@ export function parseSmsForTransaction(sms: string): ParsedSmsCandidate {
     rawMessage: sms,
     parserDiagnostics: { amountMatch, hasTransactionKeyword, hasCardKeywordMatch },
   };
+}
+
+function normalizeSmsDateToDay(dateValue?: string | null): string | null {
+  if (!dateValue) return null;
+
+  const parsedDate = new Date(dateValue);
+  if (Number.isNaN(parsedDate.getTime())) {
+    const asNumber = Number(dateValue);
+    if (!Number.isFinite(asNumber)) return null;
+    const fallbackDate = new Date(asNumber);
+    if (Number.isNaN(fallbackDate.getTime())) return null;
+    return `${fallbackDate.getFullYear()}-${String(fallbackDate.getMonth() + 1).padStart(2, '0')}-${String(fallbackDate.getDate()).padStart(2, '0')}`;
+  }
+
+  return `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`;
 }
 
 export function matchCardFromSms(
@@ -271,7 +293,7 @@ function hasCardKeyword(message: string): boolean {
 export async function ingestSmsTransactions(
   userId: string,
   userCards: { id: string; name: string; aliases?: string[] }[],
-  smsListOverride?: string[]
+  smsListOverride?: Array<string | SmsInboxEntry>
 ) {
   const smsList = smsListOverride ?? (await readSmsInbox());
   const results = [] as Array<{ parsed: ParsedSmsCandidate; match: CardMatchResult; createdTransaction?: any }>;
@@ -280,8 +302,11 @@ export async function ingestSmsTransactions(
   const { addTransaction } = await import('./transactionWriteService');
   const supabase = hasSupabaseEnv ? (await import('./supabase')).supabase : null;
 
-  for (const sms of smsList) {
-    const parsed = parseSmsForTransaction(sms);
+  for (const smsItem of smsList) {
+    const smsText = typeof smsItem === 'string' ? smsItem : smsItem.body;
+    const smsDate = typeof smsItem === 'string' ? null : normalizeSmsDateToDay(smsItem.date ?? null);
+    const parsed = parseSmsForTransaction(smsText);
+    parsed.date = smsDate;
     const hasTransaction = hasTransactionKeyword(parsed.rawMessage);
     const hasCard = hasCardKeyword(parsed.rawMessage);
     if (!hasTransaction || !hasCard) {
@@ -296,7 +321,7 @@ export async function ingestSmsTransactions(
     }
 
     // compute stable hash for this raw message and skip duplicates seen in this runtime
-    const hash = smsHash(parsed.rawMessage || sms);
+    const hash = smsHash(parsed.rawMessage || smsText);
     if (_ingestionSeen.has(hash)) {
       const entry: { parsed: ParsedSmsCandidate; match: CardMatchResult; createdTransaction?: any } = {
         parsed,
@@ -366,7 +391,7 @@ export async function ingestSmsTransactions(
 
     if (finalCardId && parsed.amount !== null) {
       // create pending system transaction
-      const txnDate = new Date().toISOString().split('T')[0];
+      const txnDate = parsed.date || new Date().toISOString().split('T')[0];
       try {
         const txn = await addTransaction({
           user_id: userId,
