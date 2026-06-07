@@ -259,6 +259,10 @@ export default function CardDetailScreen() {
     setViewMode((previousMode) => (previousMode === 'calendar' ? 'statement' : 'calendar'));
   }, []);
 
+  const heroSpend = totalSpends;
+  const heroCashback = totalCashback;
+  const heroReturn = savingsPercentage.toFixed(2);
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: appTheme.colors.background }}>
@@ -268,29 +272,57 @@ export default function CardDetailScreen() {
   }
 
   return (
-    <ScrollView
-      style={{ backgroundColor: appTheme.colors.background }}
-      contentContainerStyle={{ paddingBottom: 34, backgroundColor: appTheme.colors.background }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
+    <View style={{ flex: 1, backgroundColor: appTheme.colors.background }}>
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: -100,
+          right: -110,
+          width: 250,
+          height: 250,
+          borderRadius: 125,
+          backgroundColor: appTheme.colors.tertiaryContainer,
+          opacity: appTheme.dark ? 0.26 : 0.36,
+        }}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: 170,
+          left: -120,
+          width: 220,
+          height: 220,
+          borderRadius: 110,
+          backgroundColor: appTheme.colors.primaryContainer,
+          opacity: appTheme.dark ? 0.18 : 0.34,
+        }}
+      />
+      <ScrollView
+        style={{ backgroundColor: 'transparent' }}
+        contentContainerStyle={{ paddingBottom: 34, backgroundColor: 'transparent' }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
       {/* Header */}
-      <Surface style={{ marginHorizontal: 16, marginTop: 12, borderRadius: 20, overflow: 'hidden' }}>
+      <Surface style={{ marginHorizontal: 16, marginTop: 12, borderRadius: 28, overflow: 'hidden', borderWidth: 1, borderColor: appTheme.colors.outlineVariant }}>
         <LinearGradient
-          colors={[appTheme.colors.primaryContainer, appTheme.colors.surface]}
+          colors={[
+            appTheme.dark ? '#25113d' : '#f0e8ff',
+            appTheme.colors.primaryContainer,
+            appTheme.colors.surface,
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ paddingHorizontal: 10, paddingVertical: 10 }}
+          style={{ paddingHorizontal: 14, paddingTop: 14, paddingBottom: 16 }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 }}>
               <IconButton
                 icon={() => <MaterialCommunityIcons name="arrow-left" size={20} color={appTheme.colors.onBackground} />}
                 containerColor={appTheme.colors.surface}
                 onPress={() => (navigation as any).goBack()}
               />
-              <Text variant="titleLarge" style={{ fontWeight: '800', color: appTheme.colors.onSurface, marginLeft: 2 }} numberOfLines={1}>
-                {cardDetails?.name || 'Card Details'}
-              </Text>
             </View>
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -301,12 +333,61 @@ export default function CardDetailScreen() {
               />
             </View>
           </View>
+
+          <View style={{ marginBottom: 16 }}>
+            <Text variant="labelMedium" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 6, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+              Card overview
+            </Text>
+            <Text variant="headlineSmall" style={{ fontWeight: '900', color: appTheme.colors.onSurface }} numberOfLines={1}>
+              {cardDetails?.name || 'Card Details'}
+            </Text>
+            <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 6 }} numberOfLines={1}>
+              {cardDetails?.variant || 'Card'} • {periodLabel}
+            </Text>
+          </View>
+
+          {cardDetails && (
+            <View style={{ marginBottom: 14 }}>
+              <CreditCardTile
+                cardName={cardDetails.name}
+                cardBrand={cardDetails.variant}
+                cashback={heroCashback}
+                spends={heroSpend}
+                rewardType={cardDetails.reward_type}
+                isActive
+              />
+            </View>
+          )}
+
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
+            <View style={{ flex: 1, backgroundColor: appTheme.dark ? 'rgba(15,23,42,0.55)' : 'rgba(255,255,255,0.76)', borderRadius: 18, padding: 14, borderWidth: 1, borderColor: appTheme.colors.outlineVariant }}>
+              <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 6 }}>Spend this period</Text>
+              <Text variant="titleMedium" style={{ color: appTheme.colors.onSurface, fontWeight: '900' }}>₹{heroSpend.toLocaleString()}</Text>
+            </View>
+            <View style={{ flex: 1, backgroundColor: appTheme.dark ? 'rgba(15,23,42,0.55)' : 'rgba(255,255,255,0.76)', borderRadius: 18, padding: 14, borderWidth: 1, borderColor: appTheme.colors.outlineVariant }}>
+              <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 6 }}>Expected cashback</Text>
+              <Text variant="titleMedium" style={{ color: appTheme.colors.onSurface, fontWeight: '900' }}>₹{heroCashback.toLocaleString()}</Text>
+            </View>
+            <View style={{ flex: 1, backgroundColor: appTheme.dark ? 'rgba(15,23,42,0.55)' : 'rgba(255,255,255,0.76)', borderRadius: 18, padding: 14, borderWidth: 1, borderColor: appTheme.colors.outlineVariant }}>
+              <Text variant="labelSmall" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 6 }}>Return rate</Text>
+              <Text variant="titleMedium" style={{ color: appTheme.colors.onSurface, fontWeight: '900' }}>{heroReturn}%</Text>
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <Chip compact style={{ backgroundColor: appTheme.colors.secondaryContainer }} textStyle={{ color: appTheme.colors.onSurface, fontWeight: '800' }}>
+              {periodLabel}
+            </Chip>
+            <Chip compact style={{ backgroundColor: appTheme.colors.primaryContainer }} textStyle={{ color: appTheme.colors.onPrimaryContainer, fontWeight: '800' }}>
+              {viewMode === 'calendar' ? 'Calendar month' : 'Statement period'}
+            </Chip>
+          </View>
         </LinearGradient>
       </Surface>
 
       {/* Error State */}
       {error && (
-        <View style={{ margin: 16, padding: 16, backgroundColor: appTheme.colors.surface, borderRadius: 12, borderWidth: 1, borderColor: appTheme.colors.surfaceVariant }}>
+        <View style={{ margin: 16, padding: 16, backgroundColor: appTheme.colors.surface, borderRadius: 16, borderWidth: 1, borderColor: appTheme.colors.outlineVariant }}>
           <Text variant="bodyMedium" style={{ color: appTheme.colors.error }}>
             {error}
           </Text>
@@ -316,7 +397,7 @@ export default function CardDetailScreen() {
       {/* Period View Toggle */}
       {cardDetails?.statement_day && (
         <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
-          <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 14, borderWidth: 1, borderColor: appTheme.colors.outlineVariant, paddingHorizontal: 12, paddingVertical: 10 }}>
+          <View style={{ backgroundColor: appTheme.colors.surface, borderRadius: 18, borderWidth: 1, borderColor: appTheme.colors.outlineVariant, paddingHorizontal: 12, paddingVertical: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
               <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, flex: 1 }}>
                 {periodLabel}
@@ -342,25 +423,14 @@ export default function CardDetailScreen() {
       )}
 
       {/* Card Preview */}
-      {cardDetails && (
-        <View style={{ paddingHorizontal: 16, paddingTop: 12, gap: 12 }}>
-          <CreditCardTile
-            cardName={cardDetails.name}
-            cardBrand={cardDetails.variant}
-            cashback={totalCashback}
-            spends={totalSpends}
-            rewardType={cardDetails.reward_type}
-            isActive
-          />
-        </View>
-      )}
+      {/* Card preview intentionally lives in the hero for a denser, more premium layout */}
 
       {/* Categories */}
       <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
-        <Surface style={{ padding: 12, borderRadius: 16, backgroundColor: appTheme.colors.surface, borderColor: appTheme.colors.outlineVariant, borderWidth: 1 }}>
+        <Surface style={{ padding: 14, borderRadius: 18, backgroundColor: appTheme.colors.surface, borderColor: appTheme.colors.outlineVariant, borderWidth: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <View>
-              <Text variant="titleMedium" style={{ fontWeight: '700' }}>Categories</Text>
+              <Text variant="titleMedium" style={{ fontWeight: '800' }}>Categories</Text>
               <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>{cardCategories.length} categories</Text>
             </View>
             <IconButton
@@ -395,9 +465,9 @@ export default function CardDetailScreen() {
 
       {/* Transactions List */}
       <View style={{ paddingHorizontal: 16, paddingTop: 16, marginBottom: 24 }}>
-        <Surface style={{ borderRadius: 16, backgroundColor: appTheme.colors.surface, borderWidth: 1, borderColor: appTheme.colors.outlineVariant, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8 }}>
+        <Surface style={{ borderRadius: 18, backgroundColor: appTheme.colors.surface, borderWidth: 1, borderColor: appTheme.colors.outlineVariant, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text variant="titleMedium" style={{ fontWeight: '700' }}>Transactions</Text>
+            <Text variant="titleMedium" style={{ fontWeight: '800' }}>Transactions</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant, marginRight: 8 }}>{filteredTransactions.length}</Text>
               <IconButton
@@ -432,6 +502,7 @@ export default function CardDetailScreen() {
           )}
         </Surface>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

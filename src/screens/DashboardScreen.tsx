@@ -234,62 +234,121 @@ export default function DashboardScreen() {
   const displayedCards = activeCardTab === 'active' ? activeCards : inactiveCards;
   const hasCashbackCards = activeCards.some((c) => c.reward_type !== 'miles');
   const hasMilesCards = activeCards.some((c) => c.reward_type === 'miles');
+  const thisMonthSpend = state.totals.totalSpends || 0;
+  const thisMonthCashback = activeCards.reduce((accumulator, card) => {
+    if (card.reward_type !== 'miles') {
+      return accumulator + (state.cardTotals[card.id]?.cashback || 0);
+    }
+    return accumulator;
+  }, 0);
+  const activeCardCount = activeCards.length;
+  const pendingCount = state.pendingTransactions.length;
 
   return (
     <View style={{ flex: 1, backgroundColor: appTheme.colors.background }}>
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: -120,
+          right: -100,
+          width: 260,
+          height: 260,
+          borderRadius: 130,
+          backgroundColor: appTheme.colors.tertiaryContainer,
+          opacity: appTheme.dark ? 0.28 : 0.38,
+        }}
+      />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: 180,
+          left: -120,
+          width: 220,
+          height: 220,
+          borderRadius: 110,
+          backgroundColor: appTheme.colors.primaryContainer,
+          opacity: appTheme.dark ? 0.18 : 0.35,
+        }}
+      />
       <ScrollView
         style={{ backgroundColor: appTheme.colors.background }}
-        contentContainerStyle={{ paddingBottom: 112, backgroundColor: appTheme.colors.background }}
+        contentContainerStyle={{ paddingBottom: 128, backgroundColor: appTheme.colors.background }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {/* Header */}
-        <Surface style={{ marginHorizontal: 16, marginTop: 12, borderRadius: 20, overflow: 'hidden', backgroundColor: appTheme.colors.surface }}>
+        {/* Hero */}
+        <Surface style={{ marginHorizontal: 16, marginTop: 12, borderRadius: 28, overflow: 'hidden', backgroundColor: appTheme.colors.surface, borderWidth: 1, borderColor: appTheme.colors.outlineVariant }}>
           <LinearGradient
-            colors={[appTheme.colors.primaryContainer, appTheme.colors.surface]}
+            colors={[
+              appTheme.colors.surfaceVariant,
+              appTheme.colors.primaryContainer,
+              appTheme.colors.surface,
+            ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ paddingHorizontal: 14, paddingVertical: 14 }}
+            style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 18 }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flex: 1, paddingRight: 8 }}>
-                <Text variant="headlineSmall" style={{ fontWeight: '800', marginBottom: 4, color: appTheme.colors.onSurface }}>
-                  Cashtrack
-                </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, paddingRight: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text variant="headlineSmall" style={{ fontWeight: '900', color: appTheme.colors.onSurface }}>
+                    Dashboard
+                  </Text>
+                </View>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <IconButton
-                  icon={smsSyncing ? 'progress-clock' : 'message-reply-text'}
-                  containerColor={appTheme.colors.surface}
-                  iconColor={appTheme.colors.primary}
-                  onPress={async () => {
-                    if (!sessionUserId) {
-                      setSnackbarText('Not signed in');
-                      setSnackbarVisible(true);
-                      return;
+              <IconButton
+                icon={smsSyncing ? 'progress-clock' : 'message-reply-text'}
+                containerColor={appTheme.colors.surface}
+                iconColor={appTheme.colors.primary}
+                onPress={async () => {
+                  if (!sessionUserId) {
+                    setSnackbarText('Not signed in');
+                    setSnackbarVisible(true);
+                    return;
+                  }
+                  setSmsSyncing(true);
+                  try {
+                    const { ingestSmsTransactions } = await import('../lib/smsIngestion');
+                    const userCards = state.cards.map((c) => ({ id: c.id, name: c.name, aliases: (c as any).aliases, last_4_digits: (c as any).last_4_digits }));
+                    const results = await ingestSmsTransactions(sessionUserId, userCards);
+                    const createdCount = results.filter((r) => r.createdTransaction && !(r.createdTransaction as any).error).length;
+                    if (createdCount > 0) {
+                      setSnackbarText(`Added ${createdCount} transactions via SMS`);
+                    } else {
+                      setSnackbarText('No new SMS transactions found');
                     }
-                    setSmsSyncing(true);
-                    try {
-                      const { ingestSmsTransactions } = await import('../lib/smsIngestion');
-                      const userCards = state.cards.map((c) => ({ id: c.id, name: c.name, aliases: (c as any).aliases, last_4_digits: (c as any).last_4_digits }));
-                      const results = await ingestSmsTransactions(sessionUserId, userCards);
-                      const createdCount = results.filter((r) => r.createdTransaction && !(r.createdTransaction as any).error).length;
-                      if (createdCount > 0) {
-                        setSnackbarText(`Added ${createdCount} transactions via SMS`);
-                      } else {
-                        setSnackbarText('No new SMS transactions found');
-                      }
-                      setSnackbarVisible(true);
-                      hydrate();
-                    } catch (err) {
-                      setSnackbarText(String(err instanceof Error ? err.message : err));
-                      setSnackbarVisible(true);
-                    } finally {
-                      setSmsSyncing(false);
-                    }
-                  }}
-                  size={20}
-                />
+                    setSnackbarVisible(true);
+                    hydrate();
+                  } catch (err) {
+                    setSnackbarText(String(err instanceof Error ? err.message : err));
+                    setSnackbarVisible(true);
+                  } finally {
+                    setSmsSyncing(false);
+                  }
+                }}
+                size={20}
+              />
+            </View>
+
+            <View style={{ marginBottom: 18 }}>
+              <Text variant="labelMedium" style={{ color: appTheme.colors.onSurfaceVariant, marginBottom: 6, letterSpacing: 0.6 }}>
+                This month tracked
+              </Text>
+              <Text variant="displaySmall" style={{ fontWeight: '900', color: appTheme.colors.onSurface }}>
+                ₹{thisMonthSpend.toLocaleString()}
+              </Text>
+              <Text variant="bodyMedium" style={{ color: appTheme.colors.onSurfaceVariant, marginTop: 6 }}>
+                {pendingCount > 0 ? `${pendingCount} SMS transactions waiting for review` : 'No SMS items waiting for review'}
+              </Text>
+            </View> 
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <View style={{ flex: 1, alignItems: 'flex-start' }}>
                 <MonthPicker selectedDate={selectedMonth} onChange={setSelectedMonth} />
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: appTheme.dark ? 'rgba(15,23,42,0.44)' : 'rgba(255,255,255,0.7)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8, borderWidth: 1, borderColor: appTheme.colors.outlineVariant }}>
+                <Text variant="labelMedium" style={{ color: appTheme.colors.onSurfaceVariant, fontWeight: '700' }}>SMS sync ready</Text>
               </View>
             </View>
           </LinearGradient>
@@ -353,20 +412,35 @@ export default function DashboardScreen() {
         {(activeCards.length > 0 || inactiveCards.length > 0) && (
           <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
             <View style={{ marginBottom: 12 }}>
-              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: appTheme.colors.surfaceVariant }}>
-                <Text variant="titleMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>
-                  Cards ({activeCards.length + inactiveCards.length} total)
-                </Text>
+              <Surface style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: appTheme.colors.surface, borderWidth: 1, borderColor: appTheme.colors.outlineVariant }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View>
+                    <Text variant="titleMedium" style={{ fontWeight: '800', color: appTheme.colors.onSurface }}>
+                      Cards
+                    </Text>
+                    <Text variant="bodySmall" style={{ color: appTheme.colors.onSurfaceVariant }}>
+                      {activeCards.length + inactiveCards.length} total across active and closed accounts
+                    </Text>
+                  </View>
+                  <View style={{ backgroundColor: appTheme.colors.primaryContainer, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 }}>
+                    <Text variant="labelMedium" style={{ color: appTheme.colors.onPrimaryContainer, fontWeight: '800' }}>{activeCards.length} active</Text>
+                  </View>
+                </View>
               </Surface>
             </View>
             <View
               style={{
                 flexDirection: 'row',
                 backgroundColor: appTheme.colors.surface,
-                borderRadius: 14,
+                borderRadius: 18,
                 padding: 4,
                 borderWidth: 1,
                 borderColor: appTheme.colors.outlineVariant,
+                shadowColor: appTheme.colors.shadow,
+                shadowOpacity: appTheme.dark ? 0.22 : 0.06,
+                shadowRadius: 14,
+                shadowOffset: { width: 0, height: 6 },
+                elevation: 2,
               }}
             >
               <Pressable
@@ -445,13 +519,13 @@ export default function DashboardScreen() {
         {state.pendingTransactions.length > 0 && (
           <View style={{ paddingHorizontal: 16, paddingTop: 16, marginBottom: 8 }}>
             <View style={{ marginBottom: 8 }}>
-              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: appTheme.colors.errorContainer }}>
-                <Text variant="titleMedium" style={{ fontWeight: '700', color: appTheme.colors.error }}>
+              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: appTheme.colors.errorContainer, borderWidth: 1, borderColor: appTheme.colors.error }}>
+                <Text variant="titleMedium" style={{ fontWeight: '800', color: appTheme.colors.error }}>
                   Pending SMS Review ({state.pendingTransactions.length})
                 </Text>
               </Surface>
             </View>
-            <View style={{ backgroundColor: appTheme.colors.errorContainer, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: appTheme.colors.error }}>
+            <View style={{ backgroundColor: appTheme.colors.errorContainer, borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: appTheme.colors.error }}>
               {state.pendingTransactions.map((txn, index) => (
                 <Pressable
                   key={txn.id}
@@ -486,8 +560,8 @@ export default function DashboardScreen() {
         {state.recentTransactions.length > 0 && (
           <View style={{ paddingHorizontal: 16, paddingTop: 16, marginBottom: 16 }}>
             <View style={{ marginBottom: 10 }}>
-              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: appTheme.colors.surfaceVariant }}>
-                <Text variant="titleMedium" style={{ fontWeight: '700', color: appTheme.colors.onSurface }}>
+              <Surface style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: appTheme.colors.surface, borderWidth: 1, borderColor: appTheme.colors.outlineVariant }}>
+                <Text variant="titleMedium" style={{ fontWeight: '800', color: appTheme.colors.onSurface }}>
                   Recent Transactions ({state.recentTransactions.length})
                 </Text>
               </Surface>

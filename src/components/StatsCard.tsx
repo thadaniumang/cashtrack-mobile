@@ -44,6 +44,11 @@ export function StatsCard({ title, value, rewardType = 'cashback', subtitle, sty
           borderRadius: 18,
           borderWidth: 1,
           borderColor: hexToRgba(accentColor, 0.3),
+          elevation: 4,
+          shadowColor: (theme as any).colors?.shadow || 'rgba(0,0,0,0.08)',
+          shadowOpacity: 0.12,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 6 },
         },
         style,
       ]}
@@ -73,8 +78,8 @@ export function StatsCard({ title, value, rewardType = 'cashback', subtitle, sty
             </View>
           </View>
           <Text
-            variant="headlineSmall"
-            style={{ color: accentColor, fontWeight: '800', marginBottom: subtitle ? 8 : 0 }}
+            variant="displaySmall"
+            style={{ color: accentColor, fontWeight: '900', marginBottom: subtitle ? 8 : 0, fontSize: 28 }}
           >
             {valueLabel}
           </Text>

@@ -68,12 +68,17 @@ export function CreditCardTile({
             borderRadius: 22,
             borderWidth: 1,
             borderColor: hexToRgba(gradient.accent, 0.28),
+            elevation: 6,
+            shadowColor: (theme as any).colors?.shadow || 'rgba(0,0,0,0.08)',
+            shadowOpacity: 0.14,
+            shadowRadius: 14,
+            shadowOffset: { width: 0, height: 8 },
           },
           style,
         ]}
       >
         <LinearGradient
-          colors={[hexToRgba(gradient.start, 0.32), hexToRgba(gradient.end, 0.5)]}
+          colors={[gradient.start, gradient.end]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{ padding: 0 }}
@@ -83,13 +88,13 @@ export function CreditCardTile({
               <View>
                 <Text
                   variant="labelMedium"
-                  style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4, letterSpacing: 0.8, fontWeight: '700' }}
+                  style={{ color: theme.colors.cardText, marginBottom: 4, letterSpacing: 0.8, fontWeight: '700' }}
                 >
                   {normalizedBrand.toUpperCase()}
                 </Text>
                 <Text
                   variant="titleLarge"
-                  style={{ color: theme.colors.onSurface, fontWeight: '800' }}
+                  style={{ color: theme.colors.cardText, fontWeight: '800' }}
                   numberOfLines={1}
                 >
                   {cardName}
@@ -113,13 +118,13 @@ export function CreditCardTile({
               <View style={{ flex: 1, borderRadius: 14, paddingVertical: 10 }}>
                 <Text
                   variant="labelMedium"
-                  style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4, fontWeight: '600' }}
+                  style={{ color: theme.colors.cardText, marginBottom: 4, fontWeight: '600' }}
                 >
                   Expected
                 </Text>
                 <Text
                   variant="bodyLarge"
-                  style={{ color: accentColor, fontWeight: '800' }}
+                  style={{ color: theme.colors.cardText, fontWeight: '800' }}
                 >
                   {rewardValue}
                 </Text>
@@ -128,13 +133,13 @@ export function CreditCardTile({
               <View style={{ flex: 1, borderRadius: 14, paddingVertical: 10 }}>
                 <Text
                   variant="labelMedium"
-                  style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4, fontWeight: '600' }}
+                  style={{ color: theme.colors.cardText, marginBottom: 4, fontWeight: '600' }}
                 >
                   Spends
                 </Text>
                 <Text
                   variant="bodyLarge"
-                  style={{ color: theme.colors.onSurface, fontWeight: '800' }}
+                  style={{ color: theme.colors.cardText, fontWeight: '800' }}
                 >
                   ₹{spends.toLocaleString()}
                 </Text>

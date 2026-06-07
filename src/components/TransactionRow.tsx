@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ViewStyle } from 'react-native';
 import { Text, useTheme, TouchableRipple, Surface } from 'react-native-paper';
+import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 interface TransactionRowProps {
@@ -31,52 +32,43 @@ export function TransactionRow({
       <Surface
         style={[
           {
-            marginVertical: 5,
+            marginVertical: 6,
             borderRadius: 16,
-            paddingHorizontal: 12,
-            paddingVertical: 12,
+            paddingHorizontal: 14,
+            paddingVertical: 14,
             backgroundColor: theme.colors.surface,
-            borderWidth: 1,
-            borderColor: theme.colors.outlineVariant,
+            borderWidth: 0,
+            elevation: 2,
+            shadowColor: theme.colors.shadow,
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 4 },
           },
           style,
         ]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 10 }}>
-            <View
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 17,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 10,
-                backgroundColor: theme.colors.primaryContainer,
-              }}
-            >
-              <MaterialCommunityIcons name="script-text-outline" size={18} color={theme.colors.onPrimaryContainer} />
-            </View>
             <View style={{ flex: 1 }}>
-              <Text variant="titleSmall" style={{ fontWeight: '700', color: theme.colors.onSurface }} numberOfLines={1}>
+              <Text variant="titleMedium" style={{ fontWeight: '800', color: theme.colors.onSurface }} numberOfLines={1}>
                 {title}
               </Text>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} numberOfLines={1}>
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }} numberOfLines={1}>
                 {subtitle}
               </Text>
             </View>
           </View>
 
           <View style={{ alignItems: 'flex-end', marginLeft: 6 }}>
-            <Text variant="titleSmall" style={{ fontWeight: '800', marginBottom: 2, color: theme.colors.onSurface }}>
+            <Text variant="titleMedium" style={{ fontWeight: '900', marginBottom: 6, color: theme.colors.onSurface }}>
               ₹{amount.toLocaleString()}
             </Text>
-            <View style={{ backgroundColor: theme.colors.successContainer, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 }}>
-              <Text variant="labelSmall" style={{ color: theme.colors.onSuccessContainer, fontWeight: '700' }}>
+            <View style={{ backgroundColor: theme.colors.successContainer, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <Text variant="labelSmall" style={{ color: theme.colors.onSuccessContainer, fontWeight: '800' }}>
                 +₹{cashback.toLocaleString()}
               </Text>
             </View>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>{date}</Text>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 6 }}>{date}</Text>
           </View>
         </View>
       </Surface>

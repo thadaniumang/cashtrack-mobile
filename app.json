@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Cashtrack Dev",
+    "name": "Cashtrack",
     "slug": "cashtrack-native",
     "icon": "./assets/app-icon.png",
     "version": "0.1.0",
